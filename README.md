@@ -1,5 +1,7 @@
 ## What is This?
 
+<img src="https://raw.githubusercontent.com/codepoet80/enyo2-checkmate/main/enyo-app/icon.png">
+
 This is a cross-platform app for my [Check Mate To Do List](https://github.com/codepoet80/checkmate-service) service. 
 
 This was built to work on a variety of devices by using [EnyoJS](https://github.com/codepoet80/enyo2), starting from a [Bootplate](https://github.com/codepoet80/enyo2-bootplate).
