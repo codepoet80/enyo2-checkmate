@@ -1,0 +1,9 @@
+Check Mate is an app written for legacy devices, initially targeting Palm/HPs webOS mobile environment, and OmniWeb 2.7 for NeXTStep, but with an interface that would work on modern computers. As various other To Do List apps became less-and-less compatible with older devices, I decided I wanted to own my desinty -- and my data.
+
+Check Mate HD continues the tradition of supporting a wide range of devices, using EnyoJS -- the cross-platform Javascript library that grew out of Open WebOS and LG's subsequent acquisition of the technology for their TVs. As a result, the code runs on legacy webOS devices, modern browsers, and with this bundle, on Android devices -- and it shares data with the original Check Mate, that still runs on even older environments.
+
+The app is backed by a service, and I host an instance of it for webOS users. You're welcome to use it, but you're just as welcome to run your own, so you're in complete control. The source code for this app, and for the back-end, are on my GitHub: github.com/codepoet
+
+That's the back story, but what is the app? Its the simplest of To Do lists. No data is shared with anyone else, there's no special permissions needed, no ads and no tracking. Tasks can be created, edited and checked off. When you're ready to clean-up, hit the Sweep icon to have completed tasks entirely and permanently removed.
+
+Each To Do list is a randomly selected chess move and your password is a randomly selected chess grandmaster. To keep it compatible with older devices, there's no OAuth or directory integration -- but the Android version uses HTTPS by default. There are other considerations, as well, to keep the app compatible and free of annoyances in a cross-platform manor, but I hope you find it usable and useful. You can access your to do list on any other device by visiting checkmate.webosarchive.com.
