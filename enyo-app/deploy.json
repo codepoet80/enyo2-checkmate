@@ -1,0 +1,6 @@
+{
+	"enyo": "./enyo",
+	"packagejs": "./package.js",
+	"assets": ["./icon.png", "./icon-256.png", "./favicon.ico", "./cordova.js", "./manifest.json", "./browserconfig.xml", "./appinfo.json", "./index.html", "./assets", "./icons"],
+	"libs": ["./lib/onyx", "./lib/layout"]
+}

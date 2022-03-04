@@ -1,0 +1,11 @@
+{
+	"id": "com.webosarchive.checkmatehd",
+	"version": "1.0.0",
+	"vendor": "webOS Archive",
+	"type": "web",
+	"main": "index.html",
+	"title": "Check Mate HD",
+	"splashicon": "icon.png",
+	"icon": "icon.png",
+	"uiRevision": 2
+}

@@ -1,0 +1,175 @@
+/* on small devices, make each panel fit to the app width */
+.app-panels > * {
+    width: 320px;
+}
+.responsiveGrabber {
+    float:right;
+    display: none !important;
+}
+@media all and (max-width: 600px) {
+    .app-panels > * {
+        min-width: 100%;
+        max-width: 100%;
+    }
+    .responsiveGrabber {
+        display:block !important;
+    }
+}
+.spacer {
+    height:24px;
+}
+.buttonRight {
+    float: right;
+}
+.buttonRightToolbar {
+    float: right;
+    margin-top: -3px !important;
+}
+.toolButton img {
+    width: 24px;
+    height: 24px;
+    margin-top: -1px;
+}
+.toolbarIcon {
+    width: 32px;
+    height: 32px;
+    margin: 0px;
+    padding: 0px;
+}
+.toolbar {
+    box-shadow: -6px 0px 6px rgba(0,0,0,0.3);
+	-moz-box-shadow: -6px 0px 6px rgba(0,0,0,0.3);
+	-webkit-box-shadow: -6px 0px 6px rgba(0,0,0,0.3);
+}
+.toolbarSpinnnerRight {
+    float: right;
+    height: 32px;
+    width: 32px;
+}
+.detailToolbarTop {
+    border-bottom:1px solid rgb(49, 49, 49);
+}
+.detailToolbarBottom {
+    border-top:1px solid rgb(49, 49, 49);
+}
+.taskListBody {
+    border-left: 1px solid black;
+}
+.taskList {
+	background-color: rgb(213, 213, 213); 
+    padding-top: 4px;
+    padding-bottom: 4px;
+    box-shadow: -6px 0px 6px rgba(0,0,0,0.3);
+	-moz-box-shadow: -6px 0px 6px rgba(0,0,0,0.3);
+	-webkit-box-shadow: -6px 0px 6px rgba(0,0,0,0.3);
+}
+.tasklistItem { 
+    background-color: rgb(240, 240, 240); 
+    line-height: 40px;
+    font-size: medium; 
+    border: 1px solid rgb(213, 213, 213);
+    margin: 1px 6px 1px 4px
+}
+.itemTitle { margin-left: 8px; margin-top:4px;}
+.itemCheck { float: right; margin-top: -32px; margin-right:8px; width: 22px; height: 22px; }
+.itemUndo { float:left; margin: 10px 12px 0px 6px; height: 22px !important; }
+.itemSelected { background-color:rgba(148, 177, 231, 0.575); }
+.itemDeleting { background-color: rgb(190, 190, 190); color: dimgray; }
+.swipeDelete { margin: -4px 6px 4px 5px; background-color: rgba(236, 158, 158, 0.603);}
+.swipeInfo { margin: -4px 6px 4px 5px; background-color: rgba(148, 209, 148, 0.623);}
+.swipeUndo { margin: -4px 6px 4px 5px; background-color: rgba(148, 177, 231, 0.575);}
+.swipeTitle { margin-top:6px; text-align:center; padding:0; }
+.itemMoving { border: 2px dotted dimgray; }
+.itemMovingTitle { margin-left: 8px; margin-top:14px; color: dimgray;}
+
+.taskDetailPane {
+    background: url(../assets/bg.png);
+}
+.taskDetailLabel {
+    color:white;
+    font-size:larger;
+    margin-left: 5%;
+    margin-right: 6%;
+    margin-top: 12px;
+    width:89%
+}
+.taskDetailEntry {
+    margin-left: 5%;
+    margin-right: 6%;
+    width:89%;
+    font-family: 'Helvetica Neue', 'Nimbus Sans L', Arial, sans-serif;
+    font-size: large;
+}
+@media all and (max-width: 600px) {
+    .taskDetailLabel {
+        margin-left: 5%;
+        margin-right: 5%;
+        width:90%
+    }
+    .taskDetailEntry {
+        margin-left: 5%;
+        margin-right: 5%;
+        width:90%
+    }
+}
+@supports (-webkit-touch-callout: none) {
+    .taskDetailLabel {
+        margin-left: 5%;
+        margin-right: 10%;
+        width:85%
+    }
+    .taskDetailEntry {
+        margin-left: 5%;
+        margin-right: 10%;
+        width:85%
+    }
+  }
+.taskDetailEntryBottom {
+    min-height: 60%;
+}
+.expanderIcon {
+    float:right;
+    height:18px;
+    width:18px;
+}
+.darkDetail {
+    background-color: rgba(0, 0, 0, 0.493);
+    color:white;
+}
+.darkDetail .rowSeperator {
+    height:12px;
+}
+.darkDetailLabel {
+    margin-left:8px;
+}
+.darkDetailEntry {
+    width:95%;
+    margin-left:8px;
+    margin-right:4px;
+    margin-bottom:8px;
+    font-family: 'Helvetica Neue', 'Nimbus Sans L', Arial, sans-serif;
+    font-size: large;
+}
+.finePrint {
+    color:white;
+    margin-left: 5%;
+    margin-right: 5%;
+    font-size:small;
+}
+.finePrint a {
+    color:white;
+}
+.popup {
+    width: 300px;
+    padding: 20px;
+    color:black;
+    background-color: lightgray;
+    border: 1px solid dimgray;
+    box-shadow: 5px 5px 2px rgba(0,0,0,0.3);
+	-moz-box-shadow: 5px 5px 2px rgba(0,0,0,0.3);
+	-webkit-box-shadow: 5px 5px 2px rgba(0,0,0,0.3);
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+    -moz-border-radius: 10px;
+    -o-border-radius: 10px;
+}
