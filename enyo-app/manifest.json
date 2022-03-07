@@ -1,7 +1,8 @@
 {
  "name": "Check Mate HD",
  "short_name": "CheckMate",
- "start_url": "/?installed",
+ "start_url": "/app/index.html",
+ "id": "/app/manifest.json",
  "display": "standalone",
  "icons": [
   {
