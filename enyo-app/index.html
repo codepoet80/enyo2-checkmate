@@ -37,6 +37,19 @@
 		<script src="build/enyo.js" charset="utf-8"></script>
 		<script src="build/app.js" charset="utf-8"></script>
 		<script>
+			//Register service worker (stub)
+			if ('serviceWorker' in navigator) {
+				window.addEventListener('load', function() {
+					navigator.serviceWorker.register('serviceworker.js').then(function(registration) {
+					// Registration was successful
+					console.log('ServiceWorker registration successful with scope: ', registration.scope);
+					}, function(err) {
+					// registration failed :(
+					console.log('ServiceWorker registration failed: ', err);
+					});
+				});
+			}
+
 			//Stop iOS bouncy overscroll
 			function onTouchStart(e) {
 				// Save position of touch
