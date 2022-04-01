@@ -1,5 +1,9 @@
 {
  "name": "Check Mate HD",
+ "short_name": "CheckMate",
+ "start_url": "/app/index.html",
+ "id": "/app/manifest.json",
+ "display": "standalone",
  "icons": [
     {
       "src": "icons/SmallTile.scale-100.png",
@@ -449,5 +453,5 @@
       "src": "icons/1024.png",
       "sizes": "1024x1024"
     }
-  ]
+ ]
 }
