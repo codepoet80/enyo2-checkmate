@@ -49,3 +49,6 @@ This website describes managing alternatives: [https://www.fosstechnix.com/insta
     - Go to `chrome://inspect/#devices` in your Chrome-based browser
     - Launch your app from your Android device
     - Click "inspect" in the Chrome page where your app shows up
+- If the app crashes immediately upon launch, the Cordova platform bits went missing. Its an easy fix:
+    - Delete the `android` folder withing `cordova-wrapper/platforms`
+    - Re-run the build

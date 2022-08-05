@@ -86,8 +86,8 @@ if [ $android -eq 1 ]; then
     cp $mydir/enyo-app/deploy/* $mydir/cordova-wrapper/www -R
     cd $mydir/cordova-wrapper
     echo "Building Cordova..."
-    echo "using args $argcordova"
-    read -p "Press key to continue.. " -n1 -s
+    #echo "using args $argcordova"
+    #read -p "Press key to continue.. " -n1 -s
     cordova build android $argcordova
     cp $mydir/cordova-wrapper/platforms/android/app/build/outputs/apk/debug/*.apk $mydir/bin/ 2>/dev/null
     cp $mydir/cordova-wrapper/platforms/android/app/build/outputs/bundle/release/*.aab $mydir/bin/ 2>/dev/null
