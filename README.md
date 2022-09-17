@@ -10,13 +10,13 @@ EnyoJS (Enyo2) was a Javascript toolkit that evolved out of Palm/HPs webOS mobil
 
 ## Releases
 
-You can find the app for webOS in the [App Museum](http://appcatalog.webosarchive.com), and I've submitted it to Google Play (at a price of $0.99 for the headache that submission process caused). You can also use this app (or the retro-friendly version) in virtually any web browser at [http://checkmate.webosarchive](http://checkmate.webosarchive.com).
+You can find the app for webOS in the [App Museum](http://appcatalog.webosarchive.org), and I've submitted it to Google Play (at a price of $0.99 for the headache that submission process caused). You can also use this app (or the retro-friendly version) in virtually any web browser at [http://checkmate.cloud](http://checkmate.cloud).
 
 If none of those options work for you, find binaries and a web-hostable zip periodically updated in the Release section of this repo, or pull the repo and build from source.
 
 ## Dependencies
 
-Building depends on Node (v14 LTS tested), Cordova, and the toolchain for any mobile environments you want to target (Android SDK, or the legacy [webOS SDK](http://sdk.webosarchive.com))
+Building depends on Node (v14 LTS tested), Cordova, and the toolchain for any mobile environments you want to target (Android SDK, or the legacy [webOS SDK](http://sdk.webosarchive.org))
 
 ## Building
 
@@ -44,4 +44,4 @@ If you prefer to be in control, check out the other docs in this folder for plat
 
 Aside from being a fan of retro platforms, including webOS, the author thinks consumers have lost out now that the smart phone ecosystem has devolved into a duopoly. Apple and Google take turns copying each other, and consumers line up to buy basically the same new phone every year. The era when webOS, Blackberry and Windows Phone were serious competitors was marked by creativity in form factor and software development, which has been lost. This app represents a (futile) attempt to keep webOS mobile devices useful for as long as possible.
 
-The website [http://www.webosarchive.com](http://www.webosarchive.com) recovers, archives and maintains material related to development, and hosts services that restore functionality to webOS devices. A small but active community of users take advantage of these services to keep their retro devices alive.
+The website [http://www.webosarchive.org](http://www.webosarchive.org) recovers, archives and maintains material related to development, and hosts services that restore functionality to webOS devices. A small but active community of users take advantage of these services to keep their retro devices alive.

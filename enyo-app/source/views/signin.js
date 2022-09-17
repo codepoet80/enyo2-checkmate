@@ -86,7 +86,7 @@ enyo.kind({
 		this.$.drawerServer.setOpen(!this.$.drawerServer.open);
 	},
 	tapCreate: function() {
-		this.messageToShow = "I don't have this functionality built into the app yet, but you can create an account in your web browser at <a href='https://checkmate.webosarchive.com/agreement.php'>checkmate.webosarchive.com</a>.";
+		this.messageToShow = "I don't have this functionality built into the app yet, but you can create an account in your web browser at <a href='https://checkmate.cloud/agreement.php'>checkmate.cloud</a>.";
 		this.doMessage();
 	},
 	tapLogin: function() {
@@ -98,7 +98,7 @@ enyo.kind({
 			this.serverConfig.customServer = this.$.inputCustomServer.getValue();
 			this.doLogin();
 		} else {
-			this.messageToShow = "Please enter your chess move and grandmaster to log-in. If you don't have an account setup yet, you can create an account in your web browser at <a href='https://checkmate.webosarchive.com/agreement.php'>checkmate.webosarchive.com</a>.";
+			this.messageToShow = "Please enter your chess move and grandmaster to log-in. If you don't have an account setup yet, you can create an account in your web browser at <a href='https://checkmate.cloud/agreement.php'>checkmate.cloud</a>.";
 			this.doMessage();
 		}
 	}

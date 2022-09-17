@@ -13,7 +13,7 @@ enyo.kind({
 			this.serverConfig = arguments[0];
 		}
 	},
-	urlBase: "https://checkmate.webosarchive.com",
+	urlBase: "https://checkmate.cloud",
 	serverConfig: { 
 		insecure: false,
 		useCustomServer: false,
