@@ -5,7 +5,7 @@
 	"type": "web",
 	"main": "index.html",
 	"title": "Check Mate HD",
-	"splashicon": "icon-256.png",
+	"splashicon": "icon.png",
 	"icon": "icon.png",
 	"uiRevision": 2
 }
