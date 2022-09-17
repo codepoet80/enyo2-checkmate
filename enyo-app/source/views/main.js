@@ -7,7 +7,8 @@ enyo.kind({
 	cancelDeletes: [],
 	move: "",
 	grandmaster: "",
-	serverConfig: { 
+	serverConfig: {
+		urlBase: "https://checkmate.cloud",
 		insecure: false,
 		useCustomServer: false,
 		customServer:""
@@ -91,10 +92,12 @@ enyo.kind({
 		Prefs.setCookie("move", this.move);
 		this.grandmaster = "";
 		Prefs.setCookie("grandmaster", this.grandmaster);
+		enyo.log("here!");
 		var newComponent = this.$.contentPanels.createComponent({
 			name: "signinPanel", kind: "checkmate.Signin",
 			onLogin:"loginDone", onMessage:"showModalFromLogin"
 		}, {owner: this});
+		newComponent.serverConfig = this.serverConfig;
 		newComponent.render();
 		this.$.contentPanels.render();
 		this.$.contentPanels.setIndex(2);

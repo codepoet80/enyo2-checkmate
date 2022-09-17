@@ -56,7 +56,7 @@ enyo.kind({
 		this.inEdit = false;
 		this.$.taskDetailTitle.setContent("Task Detail");
 		this.taskTitle = "";
-		this.taskNote = "";
+		this.taskNotes = "";
 		this.render();
 	},
 	newTask: function() {

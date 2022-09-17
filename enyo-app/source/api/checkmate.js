@@ -13,14 +13,14 @@ enyo.kind({
 			this.serverConfig = arguments[0];
 		}
 	},
-	urlBase: "https://checkmate.cloud",
 	serverConfig: { 
+		urlBase: "",
 		insecure: false,
 		useCustomServer: false,
 		customServer:""
 	},
 	buildURL: function(actionType) {
-		var urlBase = this.urlBase;
+		var urlBase = this.serverConfig.urlBase;
 		if (this.serverConfig.useCustomServer == true && this.serverConfig.customServer != "") {
 			urlBase = this.serverConfig.customServer;
 		}
