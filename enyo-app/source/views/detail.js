@@ -18,11 +18,11 @@ enyo.kind({
             {name:"toolbarTitle", name:"taskDetailTitle", content:"Task Detail"},
             {kind:"onyx.Grabber", classes: "responsiveGrabber", showing:true },
         ]},
-		{kind: "enyo.Scroller", horizontal:"hidden", classes:"borderRed", fit:true, components:[
+		{kind: "enyo.Scroller", horizontal:"hidden", classes:"", fit:true, components:[
 			{name: "labelTaskTitle", classes:"taskDetailLabel", content: "Title"},
 			{kind: "enyo.Input", name: "taskTitle", classes:"taskDetailEntry", disabled: true, value: "", onchange: "inputChanged", oninput: "inputOccurred"},
 			{name: "labeltaskNotes", classes:"taskDetailLabel", content: "Notes" },
-			{kind: "enyo.TextArea", name: "taskNotes", classes:"borderRed taskDetailEntry taskDetailEntryBottom", disabled: true, value: "", onchange: "inputChanged", oninput: "inputOccurred"},
+			{kind: "enyo.TextArea", name: "taskNotes", classes:"taskDetailEntry taskDetailEntryBottom", disabled: true, value: "", onchange: "inputChanged", oninput: "inputOccurred"},
 		]},
 		{kind: "onyx.Toolbar", layoutKind: "FittableColumnsLayout", classes: "detailToolbarBottom", noStretch: true, components: [
 			{kind: "onyx.Button", name: "taskEditCancel", content: "Edit", ontap: "editCancelTap"},

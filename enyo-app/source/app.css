@@ -125,7 +125,7 @@
     }
   }
 .taskDetailEntryBottom {
-    min-height: 60%;
+    min-height: 250px;
 }
 .expanderIcon {
     float:right;

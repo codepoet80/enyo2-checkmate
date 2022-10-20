@@ -1,4 +1,5 @@
 enyo.depends(
 	"checkmate.js",
-	"prefs.js"
+	"prefs.js",
+	"updater.js"
 );
