@@ -65,7 +65,7 @@ enyo.kind({
 			url: useUrl,
 			method: "GET",
 			headers: {grandmaster: grandmaster},
-			cacheBust: false
+			cacheBust: true
 		});
 
 		request.error(failure);
@@ -84,7 +84,7 @@ enyo.kind({
 			method: "POST",
 			headers: {grandmaster: grandmaster},
 			postBody: JSON.stringify(taskData),
-			cacheBust: false
+			cacheBust: true
 		});
 
 		request.error(failure);
@@ -101,7 +101,7 @@ enyo.kind({
 			url: useUrl,
 			method: "POST",
 			headers: {grandmaster: grandmaster},
-			cacheBust: false
+			cacheBust: true
 		});
 
 		request.error(failure);

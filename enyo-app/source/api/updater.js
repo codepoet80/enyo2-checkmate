@@ -35,7 +35,8 @@ enyo.kind({
         if (enyo.platform.webos || window.PalmSystem) {
             var request = new enyo.Ajax({
                 url: "appinfo.json",
-                method: "GET"
+                method: "GET",
+                cacheBust: true
             });
             request.error(function() { enyo.log("Updater helper hit an error loading app info. Unable to check for update!")});
             request.response(this.performIdentifiedUpdateCheck.bind(this));
@@ -64,7 +65,8 @@ enyo.kind({
         enyo.log("Update Helper is checking for updates with URL: " + newUrl);
         var request = new enyo.Ajax({
 			url: newUrl,
-			method: "GET"
+			method: "GET",
+            cacheBust: true
 		});
 		request.error(this.updateCheckFailure.bind(this));
 		request.response(this.updateCheckSuccess.bind(this));
