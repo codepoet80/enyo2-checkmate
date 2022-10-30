@@ -58,7 +58,7 @@ enyo.kind({
             this.deviceId = enyo.getCookie("updater-uuid");
         }
         enyo.log("device data: " + deviceData);
-        var newUrl = this.updateServiceUrl + this.appName;
+        var newUrl = this.updateServiceUrl + this.appName + "/" + this.appInfo.version;
         newUrl = newUrl + "&clientid=" + this.deviceId;
         newUrl = newUrl + "&device=" + encodeURIComponent(deviceData);
         
