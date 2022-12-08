@@ -7,5 +7,6 @@
 	"title": "Check Mate HD",
 	"splashicon": "icon-splash.png",
 	"icon": "icon.png",
-	"uiRevision": 2
+	"uiRevision": 2,
+	"requiredPermissions": ["application.launcher", "location-service.operation", "luna-sysmgr.operation", "networkconnection.query", "preferences.system"]
 }
