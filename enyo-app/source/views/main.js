@@ -12,7 +12,7 @@ enyo.kind({
 	move: "",
 	grandmaster: "",
 	serverConfig: {
-		urlBase: "https://checkmate.cloud",
+		urlBase: "https://checkmate.wosa.link",
 		insecure: false,
 		useCustomServer: false,
 		customServer:""

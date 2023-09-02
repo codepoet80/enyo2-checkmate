@@ -10,7 +10,7 @@ EnyoJS (Enyo2) was a Javascript toolkit that evolved out of Palm/HPs webOS mobil
 
 ## Releases
 
-You can find the app for webOS in the [App Museum](http://appcatalog.webosarchive.org), and I've submitted it to Google Play (at a price of $0.99 for the headache that submission process caused). You can also use this app (or the retro-friendly version) in virtually any web browser at [http://checkmate.cloud](http://checkmate.cloud).
+You can find the app for webOS in the [App Museum](http://appcatalog.webosarchive.org), and I've submitted it to Google Play (at a price of $0.99 for the headache that submission process caused). You can also use this app (or the retro-friendly version) in virtually any web browser at [http://checkmate.wosa.link](http://checkmate.wosa.link).
 
 If none of those options work for you, find binaries and a web-hostable zip periodically updated in the Release section of this repo, or pull the repo and build from source.
 
