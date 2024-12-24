@@ -9,12 +9,10 @@ enyo.kind({
 	grandmaster: null,
 	updateQueue: [],
 	queuePos: -1,
-	events: {
-        onPostSuccess: "",
-		onPostError: "",
-		onRefreshSuccess: "",
-		onRefreshError: ""
-    },
+	onPostSuccess: function() {},
+	onPostError: function() {},
+	onRefreshSuccess: function() {},
+	onRefreshError: function() {},
 	create: function() {
 		this.inherited(arguments);
 		if (arguments && arguments[0]) {
@@ -65,7 +63,7 @@ enyo.kind({
 		}, this);
 		request.go();
 	},
-	getTasks: function(self) {
+	getTasks: function() {
 		useUrl = this.buildURL("read-notation") + "?move=" + this.notation;
 		enyo.log("Getting task list with url: " + useUrl);
 		
@@ -75,18 +73,35 @@ enyo.kind({
 			headers: {grandmaster: this.grandmaster},
 			cacheBust: true
 		});
-
-		request.error(this.doRefreshError);
-		//request.response(this.doRefreshSuccess(inRequest, inResponse), this);
-		request.response(this, this.doRefreshSuccess(inRequest, inResponse, self));
+		request.error(this.onRefreshError, this);
+		request.response(this.onRefreshSuccess, this);
 		request.go();
+	},
+	updateTask: function(taskData) {
+		this.updateQueue.push(taskData);
+		enyo.log("New update added to queue, length now: " + this.updateQueue.length);
+		this.processQueue();
 	},
 	processQueue: function() {
 		if (this.queuePos < this.updateQueue.length) {
+			this.queuePos++;
+			enyo.log("Processing update queue at pos: " + this.queuePos + " of " + this.updateQueue.length);
 			taskData = this.updateQueue[this.queuePos];
+			this.doUpdateTask(taskData);
 		}
 	},
-	updateTask: function(taskData) {
+	processQueueSuccess: function(inSender, inResponse) {
+		this.updateQueue.shift();
+		if (this.updateQueue.length == 0) {
+			this.queuePos = -1;
+			enyo.log("Finished processing updateQueue items!");
+			this.onPostSuccess(inSender, inResponse);
+			this.getTasks();
+		} else {
+			this.processQueue();
+		}
+	},
+	doUpdateTask: function(taskData) {
 		useUrl = this.buildURL("update-notation") + "?move=" + this.notation;
 		enyo.log("Updating task list with url: " + useUrl);
 		enyo.log("using data: " + JSON.stringify(taskData));
@@ -100,9 +115,7 @@ enyo.kind({
 		});
 
 		request.error(this.doPostError);
-		request.response(function(inRequest, inResponse) {
-			this.doPostSuccess(inResponse);
-		}, this);
+		request.response(this.processQueueSuccess, this);
 		request.go();
 	},
 	cleanupTasks: function(success, failure) {
@@ -121,5 +134,5 @@ enyo.kind({
 			success(inResponse);
 		}, this);
 		request.go();
-	},
+	}
 });

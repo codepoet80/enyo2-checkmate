@@ -10,6 +10,7 @@ enyo.kind({
 	cancelDeletes: [],
 	notation: "",
 	grandmaster: "",
+	data: [],
 	components:[
 		{kind: 'SoundPlayer', name:"mySoundPlayer", sounds: [
 			{kind: 'enyo.Audio', name:"soundSweep", src: 'assets/sweep.mp3'},
@@ -18,7 +19,7 @@ enyo.kind({
 			{kind: 'enyo.Audio', name:"soundDelete", src: 'assets/delete.mp3'},
 		]},
 		{kind: 'wosa.updater', name:"myUpdater", onUpdateFound:"handleUpdateFound"},
-		{kind: 'checkmate.api', name:"myCheckmate", onPostSuccess:"handlePostSuccess", onPostError:"handlePostError", onRefreshSuccess:"handleRefreshSuccess", onRefreshError:"handleRefreshError"},
+		{kind: 'checkmate.api', name:"myCheckmate"},
 		{kind: "Panels", name:"contentPanels", fit: true, classes:"app-panels",  narrowFit:false, arrangerKind: "CollapsingArranger", onTransitionFinish:"panelAnimationDone", wrap: false, components: [
 			{kind:"checkmate.DetailViewer", name:"taskDetails", onSave:"updateTaskFromDetails" },
 			{kind: "FittableRows", name:"body", classes:"taskListBody", fit:true, components: [
@@ -81,9 +82,18 @@ enyo.kind({
 			serverConfig = Prefs.getCookie("serverConfig", null);
 			if (serverConfig && notation && grandmaster) {
 				enyo.log("Using server config and credentials from cookies");
+				//Setup API connection
 				this.$.myCheckmate.serverConfig = serverConfig;
 				this.$.myCheckmate.notation = notation;
-				this.$.myCheckmate.grandmaster = grandmaster;		
+				this.$.myCheckmate.grandmaster = grandmaster;
+				//Setup API events
+				//	Note: although Enyo provides for public events, it doesn't let you change the call-back signature.
+				//	So we can't bind these Enyo style. We'll do it this way instead...
+				this.$.myCheckmate.onRefreshSuccess = this.handleRefreshSuccess.bind(this);
+				this.$.myCheckmate.onRefreshError = this.handleRefreshError.bind(this);
+				this.$.myCheckmate.onPostSuccess = this.handlePostSuccess.bind(this);
+				this.$.myCheckmate.onPostError = this.handlePostError.bind(this);
+				//Ready to load the task list!
 				this.loadTaskList();
 			}
 			else {
@@ -102,6 +112,7 @@ enyo.kind({
 			}
 		};
 	}),
+	/* Updater */
 	doUpdateCheck: function() {
 		//Check for updates
 		this.$.myUpdater.CheckForUpdate("Check Mate HD");
@@ -109,6 +120,7 @@ enyo.kind({
 	handleUpdateFound: function(sender, message) {
 		this.showModal("Update found!<br>" + this.$.myUpdater.UpdateMessage + "<br>Visit your App Store to download it!");
 	},
+	/* Sign In */
 	doSigninOut: function() {
 		this.notation = "";
 		Prefs.setCookie("move", this.notation);
@@ -146,6 +158,7 @@ enyo.kind({
 		
 		window.setTimeout(this.loadTaskList.bind(this), 500);
 	},
+	/* UI Events */
 	newTaskTap: function() {
 		this.selectedTask = null;
 		this.$.list.reset();
@@ -451,12 +464,13 @@ enyo.kind({
 			isEqual = false;
 		return isEqual;
 	},
+	/* API Functions */
 	loadTaskList: function() {
 		enyo.log("doing thorough update!");
 		window.clearInterval(updateInt);
 		var self = this;
 		self.startSpinner();
-		this.$.myCheckmate.getTasks(self);
+		this.$.myCheckmate.getTasks();
 		updateInt = window.setInterval(this.reloadTaskList.bind(this), updateRate);
 	},
 	reloadTaskList: function() {
@@ -464,7 +478,7 @@ enyo.kind({
 		window.clearInterval(updateInt);
 		var self = this;
 		self.startSpinner();
-		this.$.myCheckmate.getTasks(self);
+		this.$.myCheckmate.getTasks();
 		updateInt = window.setInterval(this.reloadTaskList.bind(this), updateRate);
 	},
 	startSpinner: function() {
@@ -499,6 +513,7 @@ enyo.kind({
 				if (self.selectedTask && self.selectedTask.guid == self.data[i].guid)
 					self.$.list.select(i);
 			}
+			this.loadTaskList();
 		} else {
 			self.showAPIError(inResponse);
 		}
@@ -506,10 +521,9 @@ enyo.kind({
 	handlePostError: function(){
 		self.showAPIError(inResponse);
 	},
-	handleRefreshSuccess: function(inRequest, inResponse, self) {
+	handleRefreshSuccess: function(inRequest, inResponse) {
+		self = this;
 		if (inResponse && inResponse.tasks) {
-			enyo.log("response: " + JSON.stringify(inResponse.tasks));
-			enyo.log("response data length: " + inResponse.tasks.length);
 			//Check if the list length has changed
 			isDirty = false;
 			if (inResponse.tasks.length != self.data.length) {
@@ -546,10 +560,9 @@ enyo.kind({
 				self.data = inResponse.tasks;
 				self.$.list.setCount(self.data.length);
 				self.$.list.reset();
-			}
-			//TODO: Can we make this even more individual, instead of throwing out the whole list?
+			} //TODO: Can we make this even more individual, instead of throwing out the whole list?
 		} else {
-			enyo.log(inResponse);
+			enyo.log("Unknown refresh response: " + inResponse);
 			self.showAPIError(inResponse);
 		}
 		self.stopSpinner();
@@ -558,6 +571,7 @@ enyo.kind({
 		self.showAPIError(inResponse);
 		self.stopSpinner();
 	},
+	/* UI Controls */
 	showAPIError: function(errorResponse) {
 		enyo.log("handling error" + JSON.stringify(errorResponse));
 		if (errorResponse) {
