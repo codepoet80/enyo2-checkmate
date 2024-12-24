@@ -1,6 +1,6 @@
 enyo.depends(
 	"checkmate.js",
-	"soundplayer.js",
+	"SoundPlayer.js",
 	"prefs.js",
 	"updater.js"
 );

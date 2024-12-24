@@ -18,7 +18,12 @@ enyo.kind({
 		customServer:""
 	},
 	components:[
-		{kind: 'soundplayer', name:"mySoundPlayer"},
+		{kind: 'SoundPlayer', name:"mySoundPlayer", sounds: [
+			{kind: 'enyo.Audio', name:"soundSweep", src: 'assets/sweep.mp3'},
+			{kind: 'enyo.Audio', name:"soundCheck", src: 'assets/check.mp3'},
+			{kind: 'enyo.Audio', name:"soundUncheck", src: 'assets/uncheck.mp3'},
+			{kind: 'enyo.Audio', name:"soundDelete", src: 'assets/delete.mp3'},
+		]},
 		{kind: 'wosa.updater', name:"myUpdater", onUpdateFound:"handleUpdateFound"},
 		{kind: "Panels", name:"contentPanels", fit: true, classes:"app-panels",  narrowFit:false, arrangerKind: "CollapsingArranger", onTransitionFinish:"panelAnimationDone", wrap: false, components: [
 			{kind:"checkmate.DetailViewer", name:"taskDetails", onSave:"updateTaskFromDetails" },
