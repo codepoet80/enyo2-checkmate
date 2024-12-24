@@ -18,10 +18,7 @@ enyo.kind({
 		customServer:""
 	},
 	components:[
-		{kind: 'enyo.Audio', name:"soundSweep", src: 'assets/sweep.mp3'},
-		{kind: 'enyo.Audio', name:"soundCheck", src: 'assets/check.mp3'},
-		{kind: 'enyo.Audio', name:"soundUncheck", src: 'assets/uncheck.mp3'},
-		{kind: 'enyo.Audio', name:"soundDelete", src: 'assets/delete.mp3'},
+		{kind: 'soundplayer', name:"mySoundPlayer"},
 		{kind: 'wosa.updater', name:"myUpdater", onUpdateFound:"handleUpdateFound"},
 		{kind: "Panels", name:"contentPanels", fit: true, classes:"app-panels",  narrowFit:false, arrangerKind: "CollapsingArranger", onTransitionFinish:"panelAnimationDone", wrap: false, components: [
 			{kind:"checkmate.DetailViewer", name:"taskDetails", onSave:"updateTaskFromDetails" },
@@ -153,7 +150,8 @@ enyo.kind({
 		this.loadTaskList();
 	},
 	sweepTap: function(inSender, inEvent) {
-		this.$.soundSweep.play();
+		//TODO replace: this.$.soundSweep.play();
+		this.$.mySoundPlayer.PlaySound("soundSweep");
 
 		var self = this;
 		self.api = new checkmate.api(self.serverConfig);
@@ -202,11 +200,10 @@ enyo.kind({
 				inSender.setValue(newVal);
 				this.updateTaskFromList(this.data[inEvent.index]);
 				if (this.data[inEvent.index].completed) {
-					this.$.soundCheck.pause();
-					this.$.soundCheck.play();
+					this.$.mySoundPlayer.PlaySound("soundCheck");
 				}
 				else
-					this.$.soundUncheck.play();
+					this.$.mySoundPlayer.PlaySound("soundUncheck");
 				return true;
 			} else {
 				enyo.log("setting task details...");
@@ -362,7 +359,7 @@ enyo.kind({
 					this.updateTaskFromList(this.data[i]);
 					if (this.$.taskGuid == theItem.guid)
 						this.$.taskDetails.reset();
-					this.$.soundDelete.play();
+					this.$.mySoundPlayer.PlaySound("soundDelete");
 				}
 			}
 			this.data.splice(itemToDelete, 1);
