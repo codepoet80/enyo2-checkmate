@@ -155,9 +155,7 @@ enyo.kind({
 		this.loadTaskList();
 	},
 	sweepTap: function(inSender, inEvent) {
-		//TODO replace: this.$.soundSweep.play();
-		this.$.mySoundPlayer.PlaySound("soundSweep");
-
+		this.$.mySoundPlayer.soundSweep.Play();
 		var self = this;
 		self.api = new checkmate.api(self.serverConfig);
 		self.api.cleanupTasks(self.move, self.grandmaster,
@@ -205,10 +203,10 @@ enyo.kind({
 				inSender.setValue(newVal);
 				this.updateTaskFromList(this.data[inEvent.index]);
 				if (this.data[inEvent.index].completed) {
-					this.$.mySoundPlayer.PlaySound("soundCheck");
+					this.$.mySoundPlayer.soundCheck.Play();
 				}
 				else
-					this.$.mySoundPlayer.PlaySound("soundUncheck");
+					this.$.mySoundPlayer.soundUncheck.Play();
 				return true;
 			} else {
 				enyo.log("setting task details...");
@@ -364,7 +362,7 @@ enyo.kind({
 					this.updateTaskFromList(this.data[i]);
 					if (this.$.taskGuid == theItem.guid)
 						this.$.taskDetails.reset();
-					this.$.mySoundPlayer.PlaySound("soundDelete");
+					this.$.mySoundPlayer.soundDelete.Play();
 				}
 			}
 			this.data.splice(itemToDelete, 1);

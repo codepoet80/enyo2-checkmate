@@ -8,6 +8,9 @@ SoundPlayer for Enyo2
     The audio will play, but with a delay, and it will interupt any other audio playback. This abstraction checks
     if the device supports the newer WebAudio API, and tries to use that -- falling back to Enyo if it can't for
     any reason.
+    Playing sound is similar to Enyo, but the modified sound components can't be loaded into the Enyo component tree, 
+    so instead of calling this.$.mySound.Play, include the parent, like this.$.mySoundPlayer.mySound.Play();
+    or this.$.mySoundPlayer.PlaySound("mySound")
 */
 enyo.kind({
 	name: "SoundPlayer",
@@ -23,7 +26,10 @@ enyo.kind({
             //  {kind: 'soundplayer', name:"mySoundPlayer", sounds: [{kind: 'enyo.Audio', name:"soundSweep", src: 'assets/sweep.mp3'}]}
             // Or set programmatically, by calling SetSounds passing an array of enyoAudio kinds, eg:
             //  mysoundplayer.SetSounds([{kind: 'enyo.Audio', name:"soundSweep", src: 'assets/sweep.mp3'}])
-        ],
+        ]
+    },
+    getId: function () {
+        return '';
     },
 	create: function() {
         this.inherited(arguments);
@@ -31,7 +37,7 @@ enyo.kind({
         try {
             window.AudioContext = window.AudioContext || window.webkitAudioContext;
             this.myAudioContext = new AudioContext();
-            //throw "Forced Enyo Audio Test";
+            throw "Forced Enyo Audio Test";
             this.useWebAudio = true;
         } catch (e) {
             if (e == "Forced Enyo Audio Test")
@@ -44,7 +50,14 @@ enyo.kind({
             this.loadSoundsAbstracted();
 	},
     loadSoundsAbstracted: function() {
-        //enyo.log("SoundPlayer loading sounds: " + JSON.stringify(this.sounds));
+        enyo.log("SoundPlayer loading " + this.sounds.length + " sounds on this: " + this.name);
+        for (var i=0;i<this.sounds.length;i++) {
+            enyo.log("Updating sound: " + this.sounds[i].name);
+            this.sounds[i].Play = this.Play;
+            this.sounds[i].owner = this;
+            //Add a proxy to the parent
+            this[this.sounds[i].name] = this.sounds[i];
+        }
         if (this.useWebAudio)
             this.loadSoundsWebAudio();
         else
@@ -91,6 +104,10 @@ enyo.kind({
             this.sounds = soundsArray;
         this.loadSoundsAbstracted();
     },
+    Play: function() {
+        enyo.log("Playing sound: " + this.name + " on this: " + this.owner.name);
+        this.owner.PlaySound(this.name);
+    },
     PlaySound: function(name) {
         if (this.useWebAudio) {
             //Look-up sound by name
@@ -117,7 +134,7 @@ enyo.kind({
             components = this.getComponents();
             var found = false;
             for (var i=0;i<components.length;i++) {
-                if (components[i].name == name) {
+                if (components[i].name == name && components[i].kind == "enyo.Audio") {
                     enyo.log("Playing sound " + name + " with Enyo Audio");
                     components[i].play();
                     return true;
