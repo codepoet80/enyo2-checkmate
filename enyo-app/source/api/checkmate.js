@@ -9,11 +9,16 @@ enyo.kind({
 	grandmaster: null,
 	updateQueue: [],
 	queuePos: -1,
+	events: {
+        onPostSuccess: "",
+		onPostError: "",
+		onRefreshSuccess: "",
+		onRefreshError: ""
+    },
 	create: function() {
 		this.inherited(arguments);
 		if (arguments && arguments[0]) {
-			enyo.log("checkmate API created with args: " + JSON.stringify(arguments[0]));
-			this.serverConfig = arguments[0];
+			enyo.log("checkmate API created!");
 		}
 	},
 	serverConfig: { 
@@ -60,7 +65,7 @@ enyo.kind({
 		}, this);
 		request.go();
 	},
-	getTasks: function(success, failure) {
+	getTasks: function(self) {
 		useUrl = this.buildURL("read-notation") + "?move=" + this.notation;
 		enyo.log("Getting task list with url: " + useUrl);
 		
@@ -71,10 +76,9 @@ enyo.kind({
 			cacheBust: true
 		});
 
-		request.error(failure);
-		request.response(function(inRequest, inResponse) {
-			success(inResponse);
-		}, this);
+		request.error(this.doRefreshError);
+		//request.response(this.doRefreshSuccess(inRequest, inResponse), this);
+		request.response(this, this.doRefreshSuccess(inRequest, inResponse, self));
 		request.go();
 	},
 	processQueue: function() {
@@ -82,7 +86,7 @@ enyo.kind({
 			taskData = this.updateQueue[this.queuePos];
 		}
 	},
-	updateTask: function(taskData, success, failure) {
+	updateTask: function(taskData) {
 		useUrl = this.buildURL("update-notation") + "?move=" + this.notation;
 		enyo.log("Updating task list with url: " + useUrl);
 		enyo.log("using data: " + JSON.stringify(taskData));
@@ -95,9 +99,9 @@ enyo.kind({
 			cacheBust: true
 		});
 
-		request.error(failure);
+		request.error(this.doPostError);
 		request.response(function(inRequest, inResponse) {
-			success(inResponse);
+			this.doPostSuccess(inResponse);
 		}, this);
 		request.go();
 	},
