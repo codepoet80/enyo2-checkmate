@@ -3,9 +3,12 @@
 	For more complex applications, you might choose to separate these kind definitions 
 	into multiple files under this folder.
 */
-
 enyo.kind({
 	name: "checkmate.api",
+	notation: null,
+	grandmaster: null,
+	updateQueue: [],
+	queuePos: -1,
 	create: function() {
 		this.inherited(arguments);
 		if (arguments && arguments[0]) {
@@ -57,14 +60,14 @@ enyo.kind({
 		}, this);
 		request.go();
 	},
-	getTasks: function(notation, grandmaster, success, failure) {
-		useUrl = this.buildURL("read-notation") + "?move=" + notation;
+	getTasks: function(success, failure) {
+		useUrl = this.buildURL("read-notation") + "?move=" + this.notation;
 		enyo.log("Getting task list with url: " + useUrl);
 		
 		var request = new enyo.Ajax({
 			url: useUrl,
 			method: "GET",
-			headers: {grandmaster: grandmaster},
+			headers: {grandmaster: this.grandmaster},
 			cacheBust: true
 		});
 
@@ -74,15 +77,20 @@ enyo.kind({
 		}, this);
 		request.go();
 	},
-	updateTask: function(notation, grandmaster, taskData, success, failure) {
-		useUrl = this.buildURL("update-notation") + "?move=" + notation;
+	processQueue: function() {
+		if (this.queuePos < this.updateQueue.length) {
+			taskData = this.updateQueue[this.queuePos];
+		}
+	},
+	updateTask: function(taskData, success, failure) {
+		useUrl = this.buildURL("update-notation") + "?move=" + this.notation;
 		enyo.log("Updating task list with url: " + useUrl);
 		enyo.log("using data: " + JSON.stringify(taskData));
 
 		var request = new enyo.Ajax({
 			url: useUrl,
 			method: "POST",
-			headers: {grandmaster: grandmaster},
+			headers: {grandmaster: this.grandmaster},
 			postBody: JSON.stringify(taskData),
 			cacheBust: true
 		});
@@ -93,14 +101,14 @@ enyo.kind({
 		}, this);
 		request.go();
 	},
-	cleanupTasks: function(notation, grandmaster, success, failure) {
-		useUrl = this.buildURL("cleanup-notation") + "?move=" + notation;
+	cleanupTasks: function(success, failure) {
+		useUrl = this.buildURL("cleanup-notation") + "?move=" + this.notation;
 		enyo.log("Cleaning up completed task list with url: " + useUrl);
 
 		var request = new enyo.Ajax({
 			url: useUrl,
 			method: "POST",
-			headers: {grandmaster: grandmaster},
+			headers: {grandmaster: this.grandmaster},
 			cacheBust: true
 		});
 

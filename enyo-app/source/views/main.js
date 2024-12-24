@@ -25,6 +25,7 @@ enyo.kind({
 			{kind: 'enyo.Audio', name:"soundDelete", src: 'assets/delete.mp3'},
 		]},
 		{kind: 'wosa.updater', name:"myUpdater", onUpdateFound:"handleUpdateFound"},
+		
 		{kind: "Panels", name:"contentPanels", fit: true, classes:"app-panels",  narrowFit:false, arrangerKind: "CollapsingArranger", onTransitionFinish:"panelAnimationDone", wrap: false, components: [
 			{kind:"checkmate.DetailViewer", name:"taskDetails", onSave:"updateTaskFromDetails" },
 			{kind: "FittableRows", name:"body", classes:"taskListBody", fit:true, components: [
@@ -84,7 +85,12 @@ enyo.kind({
 			this.startSpinner();
 			this.move = Prefs.getCookie("move", "");
 			this.grandmaster = Prefs.getCookie("grandmaster", "");
-			if (this.move && this.move != "" && this.grandmaster && this.grandmaster != "") {
+			this.serverConfig = Prefs.getCookie("serverConfig", "");
+			if (this.serverConfig && this.serverConfig != "" && this.move && this.move != "" && this.grandmaster && this.grandmaster != "") {
+				enyo.log("Using server config and credentials from cookies");
+				this.api = new checkmate.api(this.serverConfig);
+				this.api.notation = this.move;
+				this.api.grandmaster = this.grandmaster;		
 				this.loadTaskList();
 			}
 			else {
@@ -126,23 +132,25 @@ enyo.kind({
 		this.$.contentPanels.draggable = false;
 	},
 	loginDone: function() {
-		enyo.log("New user move: " + this.$.signinPanel.move);
-		this.move = this.$.signinPanel.move;
-		Prefs.setCookie("move", this.move);
-
-		enyo.log("New user grandmaster: " + this.$.signinPanel.grandmaster);
-		this.grandmaster = this.$.signinPanel.grandmaster;
-		Prefs.setCookie("grandmaster", this.grandmaster);
-
 		this.serverConfig = this.$.signinPanel.serverConfig;
 		enyo.log("New user server config: " + JSON.stringify(this.serverConfig));
 		Prefs.setCookie("serverConfig", this.serverConfig);
+		self.api = new checkmate.api(self.serverConfig);
+
+		enyo.log("New user move: " + this.$.signinPanel.move);
+		self.api.notation = this.$.signinPanel.move;
+		Prefs.setCookie("move", this.move);
+
+		enyo.log("New user grandmaster: " + this.$.signinPanel.grandmaster);
+		self.api.grandmaster = this.$.signinPanel.grandmaster;
+		Prefs.setCookie("grandmaster", this.grandmaster);
 
 		this.$.contentPanels.getActive().destroy();
 		this.$.contentPanels.components.pop();
 		this.$.contentPanels.setIndex(1);
 		this.$.contentPanels.render();
 		this.$.contentPanels.draggable = true;
+		
 		window.setTimeout(this.loadTaskList.bind(this), 500);
 	},
 	newTaskTap: function() {
@@ -157,9 +165,8 @@ enyo.kind({
 	sweepTap: function(inSender, inEvent) {
 		this.$.mySoundPlayer.soundSweep.Play();
 		var self = this;
-		self.api = new checkmate.api(self.serverConfig);
-		self.api.cleanupTasks(self.move, self.grandmaster,
-			function(inResponse) {
+		
+		self.api.cleanupTasks(function(inResponse) {
 				if (inResponse && inResponse.tasks) {
 					//enyo.log("sweep tasks response! " + JSON.stringify(inResponse));
 					self.data = inResponse.tasks;
@@ -374,8 +381,7 @@ enyo.kind({
 	updateTaskFromList: function(newItemData) {
 		var self = this;
 		self.newItemData = newItemData;
-		self.api = new checkmate.api(self.serverConfig);
-		self.api.updateTask(self.move, self.grandmaster, newItemData,
+		self.api.updateTask(newItemData,
 			function(inResponse) {
 				if (inResponse && inResponse.tasks) {
 					/* //This doesn't seem to be necessary (except for error checking)
@@ -407,7 +413,6 @@ enyo.kind({
 	updateTaskFromDetails: function(inSender, inEvent) {
 		var self = this;
 		self.$.contentPanels.setIndex(1);
-		self.api = new checkmate.api(self.serverConfig);
 		
 		//Determine if this is a task edit or create
 		var foundTask = false
@@ -435,7 +440,7 @@ enyo.kind({
 		}
 		//Perform the update on the server
 		if(foundTask) {
-			self.api.updateTask(self.move, self.grandmaster, foundTask,
+			self.api.updateTask(foundTask,
 				function(inResponse) {	
 					if (inResponse && inResponse.tasks) {
 						//enyo.log("update task response! " + JSON.stringify(inResponse))
@@ -485,8 +490,7 @@ enyo.kind({
 		window.clearInterval(updateInt);
 		var self = this;
 		self.startSpinner();
-		self.api = new checkmate.api(self.serverConfig);
-		self.api.getTasks(self.move, self.grandmaster, 
+		self.api.getTasks( 
 			function(inResponse) {
 				if (inResponse && inResponse.tasks) {
 					self.data = inResponse.tasks;
@@ -510,8 +514,7 @@ enyo.kind({
 		window.clearInterval(updateInt);
 		var self = this;
 		self.startSpinner();
-		self.api = new checkmate.api(self.serverConfig);
-		self.api.getTasks(self.move, self.grandmaster, 
+		self.api.getTasks( 
 			function(inResponse) {
 				if (inResponse && inResponse.tasks) {
 					enyo.log("response data length: " + inResponse.tasks.length);
