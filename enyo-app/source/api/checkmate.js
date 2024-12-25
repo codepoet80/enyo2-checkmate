@@ -8,7 +8,6 @@ enyo.kind({
 	notation: null,
 	grandmaster: null,
 	updateQueue: [],
-	queuePos: -1,
 	onPostSuccess: function() {},
 	onPostError: function() {},
 	onRefreshSuccess: function() {},
@@ -83,17 +82,18 @@ enyo.kind({
 		this.processQueue();
 	},
 	processQueue: function() {
-		if (this.queuePos < this.updateQueue.length) {
-			this.queuePos++;
-			enyo.log("Processing update queue at pos: " + this.queuePos + " of " + this.updateQueue.length);
-			taskData = this.updateQueue[this.queuePos];
+		if (this.updateQueue.length > 0) {
+			enyo.log("Processing update queue with " + this.updateQueue.length + " items");
+			taskData = this.updateQueue[0];
 			this.doUpdateTask(taskData);
+		} else {
+			enyo.log("No updates queued.");
+			this.getTasks();
 		}
 	},
 	processQueueSuccess: function(inSender, inResponse) {
 		this.updateQueue.shift();
 		if (this.updateQueue.length == 0) {
-			this.queuePos = -1;
 			enyo.log("Finished processing updateQueue items!");
 			this.onPostSuccess(inSender, inResponse);
 			this.getTasks();
