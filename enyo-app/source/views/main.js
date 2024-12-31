@@ -59,7 +59,7 @@ enyo.kind({
 					{kind: "onyx.Button", classes:"buttonRight toolButton", ontap: "sweepTap", components: [
 						{tag: "img", attributes: {src: "assets/sweep.png"}},
 					]},
-					{kind: "onyx.Button", name:"buttonLoginOut", content: "Login", classes:"buttonRight toolButton", ontap: "doSigninOut"},
+					{kind: "onyx.Button", name:"buttonLoginOut", content: "Log In", classes:"buttonRight toolButton", ontap: "doSigninOut"},
 				]},
 			]},
 		]},	
@@ -81,21 +81,22 @@ enyo.kind({
 			notation = Prefs.getCookie("move", null);
 			grandmaster = Prefs.getCookie("grandmaster", null);
 			serverConfig = Prefs.getCookie("serverConfig", null);
+			//Setup API events
+			//	Note: although Enyo provides for public events, it doesn't let you change the call-back signature.
+			//	So we can't bind these Enyo style. We'll do it this way instead...
+			this.$.myCheckmate.onRefreshSuccess = this.handleRefreshSuccess.bind(this);
+			this.$.myCheckmate.onRefreshError = this.handleRefreshError.bind(this);
+			this.$.myCheckmate.onPostSuccess = this.handlePostSuccess.bind(this);
+			this.$.myCheckmate.onPostError = this.handlePostError.bind(this);
 			if (serverConfig && notation && grandmaster) {
 				enyo.log("Using server config and credentials from cookies");
 				//Setup API connection
 				this.$.myCheckmate.serverConfig = serverConfig;
 				this.$.myCheckmate.notation = notation;
 				this.$.myCheckmate.grandmaster = grandmaster;
-				//Setup API events
-				//	Note: although Enyo provides for public events, it doesn't let you change the call-back signature.
-				//	So we can't bind these Enyo style. We'll do it this way instead...
-				this.$.myCheckmate.onRefreshSuccess = this.handleRefreshSuccess.bind(this);
-				this.$.myCheckmate.onRefreshError = this.handleRefreshError.bind(this);
-				this.$.myCheckmate.onPostSuccess = this.handlePostSuccess.bind(this);
-				this.$.myCheckmate.onPostError = this.handlePostError.bind(this);
 				//Ready to load the task list!
 				this.loadTaskList();
+				this.$.buttonLoginOut.setContent("Log Out");
 			}
 			else {
 				window.setTimeout(this.doSigninOut.bind(this), 500);
@@ -123,10 +124,13 @@ enyo.kind({
 	},
 	/* Sign In */
 	doSigninOut: function() {
+		window.clearInterval(updateInt);
+		this.errorCount = 0;
 		this.notation = "";
 		Prefs.setCookie("move", this.notation);
 		this.grandmaster = "";
 		Prefs.setCookie("grandmaster", this.grandmaster);
+		this.$.buttonLoginOut.setContent("Log In");
 		var newComponent = this.$.contentPanels.createComponent({
 			name: "signinPanel", kind: "checkmate.Signin",
 			onLogin:"loginDone", onMessage:"showModalFromLogin"
@@ -138,7 +142,12 @@ enyo.kind({
 		this.$.contentPanels.draggable = false;
 	},
 	loginDone: function() {
-		this.serverConfig = this.$.signinPanel.serverConfig;
+		this.serverConfig = {
+			urlBase: this.$.signinPanel.getUrlBase(),
+			insecure: this.$.signinPanel.getInsecure(),
+			useCustomServer: this.$.signinPanel.getUseCustomServer(),
+			customServer: this.$.signinPanel.getCustomServer()
+		}
 		enyo.log("New user server config: " + JSON.stringify(this.serverConfig));
 		Prefs.setCookie("serverConfig", this.serverConfig);
 		this.$.myCheckmate.serverConfig = this.serverConfig;
@@ -156,8 +165,8 @@ enyo.kind({
 		this.$.contentPanels.setIndex(1);
 		this.$.contentPanels.render();
 		this.$.contentPanels.draggable = true;
-		
-		window.setTimeout(this.loadTaskList.bind(this), 500);
+		this.$.buttonLoginOut.setContent("Log Out");
+		window.setTimeout(this.loadTaskList.bind(this), 800);
 	},
 	/* UI Events */
 	newTaskTap: function() {
@@ -172,7 +181,6 @@ enyo.kind({
 	},
 	sweepTap: function(inSender, inEvent) {
 		this.$.mySoundPlayer.soundSweep.Play();
-		
 		this.$.myCheckmate.cleanupTasks(function(inResponse) {
 				if (inResponse && inResponse.tasks) {
 					//enyo.log("sweep tasks response! " + JSON.stringify(inResponse));
@@ -187,7 +195,7 @@ enyo.kind({
 				} else {
 					this.handleAPIError(inResponse);
 				}
-			}, function(){
+			}.bind(this), function(){
 				this.handleAPIError(inResponse);
 			}
 		);
@@ -317,19 +325,19 @@ enyo.kind({
 		}
 	},
 	listItemSwipeDone: function(inSender, inEvent) {
-		enyo.log("item swipe has completed");
+		enyo.log("Item swipe has completed");
 		var i = inEvent.index;
 		if(!this.data[i]) {
 			return;
 		}
 		if (this.$.taskDetails.inEdit)
 		{
-			enyo.log("swiping while editing!");
+			enyo.log("Swiping while editing!");
 			return;
 		}
 		if (this.data[i].sortPosition != -1) {
 			if (inEvent.xDirection == 1) {
-				enyo.log("swipe for show/hide info panel")
+				enyo.log("Swipe for show/hide info panel")
 				this.selectedTask = this.data[inEvent.index];
 				//enyo.log("selected task is: " + this.selectedTask.guid);
 				this.$.list.select(inEvent.index);
@@ -343,7 +351,7 @@ enyo.kind({
 					this.$.contentPanels.setIndex(1);
 			}
 			else {
-				enyo.log("swipe for item delete");
+				enyo.log("Swipe for item delete");
 				this.$.list.deselect(inEvent.index);
 				this.data[inEvent.index].oldSortPosition = this.data[inEvent.index].sortPosition;
 				this.data[inEvent.index].sortPosition = "-1";
@@ -351,7 +359,7 @@ enyo.kind({
 				window.setTimeout(this.doDelayedItemDelete.bind(this, this.data[inEvent.index]), 3000);
 			}
 		} else {
-			enyo.log("swipe for cancel delete");
+			enyo.log("Swipe to cancel delete");
 			this.$.swipeItem.removeClass("itemDeleting");
 			this.data[inEvent.index].sortPosition = this.data[inEvent.index].oldSortPosition;
 			this.selectedTask = this.data[inEvent.index];
@@ -361,10 +369,10 @@ enyo.kind({
 	},
 	doDelayedItemDelete: function(theItem) {
 		if (this.cancelDeletes.indexOf(theItem.guid) != -1) {
-			enyo.log("I will cancel the delete of the item with title: " + theItem.title);
+			enyo.log("Canceling delete of the item with title: " + theItem.title);
 			this.cancelDeletes.splice(this.cancelDeletes.indexOf(theItem.guid), 1);
 		} else {
-			enyo.log("I should now delete the item with title: " + theItem.title);
+			enyo.log("Deleting the item with title: " + theItem.title);
 			//Don't trust previous index
 			var itemToDelete = -1;
 			for (var i=0;i<this.data.length;i++) {

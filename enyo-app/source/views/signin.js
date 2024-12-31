@@ -7,12 +7,10 @@ enyo.kind({
 	published: {
 		move: "",
 		grandmaster: "",
-		serverConfig: { 
-			urlBase: "",
-			insecure: false,
-			useCustomServer: false,
-			customServer:""
-		},
+		urlBase: "checkmate.wosa.link",
+		insecure: false,
+		useCustomServer: false,
+		customServer:""
 	},
 	events: {
 		onLogin: "",
@@ -35,7 +33,7 @@ enyo.kind({
 			{name: "textMove", classes:"taskDetailLabel", content: "Your Move:"},
 			{kind: "enyo.Input", name: "inputMove", classes:"taskDetailEntry", value: "",},
 			{name: "textGrandmaster", classes:"taskDetailLabel", content: "Grandmaster:"},
-			{kind: "enyo.Input", name: "inputGrandmaster", classes:"taskDetailEntry", value: "",},
+			{kind: "enyo.Input", type: "password", name: "inputGrandmaster", classes:"taskDetailEntry", value: "",},
 
 			{name: "labelConfig", classes:"taskDetailLabel", ontap:"activateConfigDrawer", components: [
 				{tag: "img", classes:"expanderIcon", attributes: {src: "assets/maximize.png"}},			
@@ -58,7 +56,7 @@ enyo.kind({
 
 		{kind: "onyx.Toolbar", layoutKind: "FittableColumnsLayout", classes: "detailToolbarBottom", noStretch: true, components: [
 			{kind: "onyx.Button", name: "buttonCreate", content: "Create", ontap: "tapCreate" },
-			{kind: "onyx.Button", name: "buttonLogin", classes:"buttonRight", content: "Login", ontap: "tapLogin" },
+			{kind: "onyx.Button", name: "buttonLogin", classes:"buttonRight", content: "Log In", ontap: "tapLogin" },
 		]}
 	],
 	rendered: enyo.inherit(function(sup) {
@@ -94,9 +92,9 @@ enyo.kind({
 		this.move = this.$.inputMove.getValue();
 		this.grandmaster = this.$.inputGrandmaster.getValue();
 		if (this.move != "" && this.grandmaster != "") {
-			this.serverConfig.insecure = this.$.checkInsecure.getValue();
-			this.serverConfig.useCustomServer = this.$.checkCustomServer.getValue();
-			this.serverConfig.customServer = this.$.inputCustomServer.getValue();
+			this.setInsecure(this.$.checkInsecure.getValue());
+			this.setUseCustomServer(this.$.checkCustomServer.getValue());
+			this.setCustomServer(this.$.inputCustomServer.getValue());
 			this.doLogin();
 		} else {
 			this.messageToShow = "Please enter your chess move and grandmaster to log-in. If you don't have an account setup yet, you can create an account in your web browser at <a href='" + this.serverConfig.urlBase + "/agreement.php'>" + this.serverConfig.urlBase + "</a>.";

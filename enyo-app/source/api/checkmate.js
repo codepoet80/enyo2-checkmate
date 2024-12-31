@@ -18,21 +18,21 @@ enyo.kind({
 			enyo.log("checkmate API created!");
 		}
 	},
-	serverConfig: { 
-		urlBase: "",
+	published: { 
+		urlBase: "checkmate.wosa.link",
 		insecure: false,
 		useCustomServer: false,
 		customServer:""
 	},
 	buildURL: function(actionType) {
-		var urlBase = this.serverConfig.urlBase;
-		if (this.serverConfig.useCustomServer == true && this.serverConfig.customServer != "") {
-			urlBase = this.serverConfig.customServer;
+		var urlBase = this.getUrlBase();
+		if (this.getUseCustomServer() == true && this.getCustomServer() != "") {
+			urlBase = this.getCustomServer();
 		}
 		if (urlBase.indexOf("http://") == -1 && urlBase.indexOf("https://") == -1) {
 			urlBase = "https://" + urlBase;
 		}
-		if (this.serverConfig.insecure) {
+		if (this.getInsecure()) {
 			enyo.warn("Warning, using insecure URL base due to setting.");
 			urlBase = urlBase.replace("https://", "http://");
 		} else {
