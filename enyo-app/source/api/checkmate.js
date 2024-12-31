@@ -104,7 +104,7 @@ enyo.kind({
 	doUpdateTask: function(taskData) {
 		useUrl = this.buildURL("update-notation") + "?move=" + this.notation;
 		enyo.log("Updating task list with url: " + useUrl);
-		enyo.log("using data: " + JSON.stringify(taskData));
+		enyo.log("Using data: " + JSON.stringify(taskData));
 
 		var request = new enyo.Ajax({
 			url: useUrl,
@@ -114,7 +114,7 @@ enyo.kind({
 			cacheBust: true
 		});
 
-		request.error(this.doPostError);
+		request.error(this.onPostError);
 		request.response(this.processQueueSuccess, this);
 		request.go();
 	},
