@@ -32,7 +32,8 @@ enyo.kind({
 		if (urlBase.indexOf("http://") == -1 && urlBase.indexOf("https://") == -1) {
 			urlBase = "https://" + urlBase;
 		}
-		if (this.getInsecure()) {
+		enyo.error("the value of insecure is: " + this.getInsecure() + " or " + this.published.insecure);
+		if (this.getInsecure() == true) {
 			enyo.warn("Warning, using insecure URL base due to setting.");
 			urlBase = urlBase.replace("https://", "http://");
 		} else {

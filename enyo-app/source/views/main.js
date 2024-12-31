@@ -90,10 +90,16 @@ enyo.kind({
 			this.$.myCheckmate.onPostError = this.handlePostError.bind(this);
 			if (serverConfig && notation && grandmaster) {
 				enyo.log("Using server config and credentials from cookies");
+				enyo.log(JSON.stringify(serverConfig));
 				//Setup API connection
-				this.$.myCheckmate.serverConfig = serverConfig;
+				this.$.myCheckmate.setUrlBase(serverConfig.urlBase);
+				this.$.myCheckmate.setInsecure(serverConfig.insecure);
+				this.$.myCheckmate.setUseCustomServer(serverConfig.useCustomServer);
+				this.$.myCheckmate.setCustomServer(serverConfig.customServer);
+
 				this.$.myCheckmate.notation = notation;
 				this.$.myCheckmate.grandmaster = grandmaster;
+	
 				//Ready to load the task list!
 				this.loadTaskList();
 				this.$.buttonLoginOut.setContent("Log Out");
