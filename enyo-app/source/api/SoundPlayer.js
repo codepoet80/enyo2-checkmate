@@ -37,7 +37,7 @@ enyo.kind({
         try {
             window.AudioContext = window.AudioContext || window.webkitAudioContext;
             this.myAudioContext = new AudioContext();
-            throw "Forced Enyo Audio Test";
+            //throw "Forced Enyo Audio Test";
             this.useWebAudio = true;
         } catch (e) {
             if (e == "Forced Enyo Audio Test")

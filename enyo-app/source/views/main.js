@@ -6,17 +6,12 @@ enyo.kind({
 	name: "checkmate.MainView",
 	kind: "FittableRows",
 	fit: true,
-	api: null,
 	selectedTask: null,
 	cancelDeletes: [],
-	move: "",
+	notation: "",
 	grandmaster: "",
-	serverConfig: {
-		urlBase: "https://checkmate.wosa.link",
-		insecure: false,
-		useCustomServer: false,
-		customServer:""
-	},
+	data: [],
+	errorCount: 2,
 	components:[
 		{kind: 'SoundPlayer', name:"mySoundPlayer", sounds: [
 			{kind: 'enyo.Audio', name:"soundSweep", src: 'assets/sweep.mp3'},
@@ -25,7 +20,7 @@ enyo.kind({
 			{kind: 'enyo.Audio', name:"soundDelete", src: 'assets/delete.mp3'},
 		]},
 		{kind: 'wosa.updater', name:"myUpdater", onUpdateFound:"handleUpdateFound"},
-		
+		{kind: 'checkmate.api', name:"myCheckmate"},
 		{kind: "Panels", name:"contentPanels", fit: true, classes:"app-panels",  narrowFit:false, arrangerKind: "CollapsingArranger", onTransitionFinish:"panelAnimationDone", wrap: false, components: [
 			{kind:"checkmate.DetailViewer", name:"taskDetails", onSave:"updateTaskFromDetails" },
 			{kind: "FittableRows", name:"body", classes:"taskListBody", fit:true, components: [
@@ -64,7 +59,7 @@ enyo.kind({
 					{kind: "onyx.Button", classes:"buttonRight toolButton", ontap: "sweepTap", components: [
 						{tag: "img", attributes: {src: "assets/sweep.png"}},
 					]},
-					{kind: "onyx.Button", name:"buttonLoginOut", content: "Login", classes:"buttonRight toolButton", ontap: "doSigninOut"},
+					{kind: "onyx.Button", name:"buttonLoginOut", content: "Log In", classes:"buttonRight toolButton", ontap: "doSigninOut"},
 				]},
 			]},
 		]},	
@@ -83,15 +78,25 @@ enyo.kind({
 		return function() {
 			sup.apply(this, arguments);
 			this.startSpinner();
-			this.move = Prefs.getCookie("move", "");
-			this.grandmaster = Prefs.getCookie("grandmaster", "");
-			this.serverConfig = Prefs.getCookie("serverConfig", "");
-			if (this.serverConfig && this.serverConfig != "" && this.move && this.move != "" && this.grandmaster && this.grandmaster != "") {
+			notation = Prefs.getCookie("move", null);
+			grandmaster = Prefs.getCookie("grandmaster", null);
+			serverConfig = Prefs.getCookie("serverConfig", null);
+			//Setup API events
+			//	Note: although Enyo provides for public events, it doesn't let you change the call-back signature.
+			//	So we can't bind these Enyo style. We'll do it this way instead...
+			this.$.myCheckmate.onRefreshSuccess = this.handleRefreshSuccess.bind(this);
+			this.$.myCheckmate.onRefreshError = this.handleRefreshError.bind(this);
+			this.$.myCheckmate.onPostSuccess = this.handlePostSuccess.bind(this);
+			this.$.myCheckmate.onPostError = this.handlePostError.bind(this);
+			if (serverConfig && notation && grandmaster) {
 				enyo.log("Using server config and credentials from cookies");
-				this.api = new checkmate.api(this.serverConfig);
-				this.api.notation = this.move;
-				this.api.grandmaster = this.grandmaster;		
+				//Setup API connection
+				this.$.myCheckmate.serverConfig = serverConfig;
+				this.$.myCheckmate.notation = notation;
+				this.$.myCheckmate.grandmaster = grandmaster;
+				//Ready to load the task list!
 				this.loadTaskList();
+				this.$.buttonLoginOut.setContent("Log Out");
 			}
 			else {
 				window.setTimeout(this.doSigninOut.bind(this), 500);
@@ -109,6 +114,7 @@ enyo.kind({
 			}
 		};
 	}),
+	/* Updater */
 	doUpdateCheck: function() {
 		//Check for updates
 		this.$.myUpdater.CheckForUpdate("Check Mate HD");
@@ -116,11 +122,15 @@ enyo.kind({
 	handleUpdateFound: function(sender, message) {
 		this.showModal("Update found!<br>" + this.$.myUpdater.UpdateMessage + "<br>Visit your App Store to download it!");
 	},
+	/* Sign In */
 	doSigninOut: function() {
-		this.move = "";
-		Prefs.setCookie("move", this.move);
+		window.clearInterval(updateInt);
+		this.errorCount = 0;
+		this.notation = "";
+		Prefs.setCookie("move", this.notation);
 		this.grandmaster = "";
 		Prefs.setCookie("grandmaster", this.grandmaster);
+		this.$.buttonLoginOut.setContent("Log In");
 		var newComponent = this.$.contentPanels.createComponent({
 			name: "signinPanel", kind: "checkmate.Signin",
 			onLogin:"loginDone", onMessage:"showModalFromLogin"
@@ -132,27 +142,33 @@ enyo.kind({
 		this.$.contentPanels.draggable = false;
 	},
 	loginDone: function() {
-		this.serverConfig = this.$.signinPanel.serverConfig;
+		this.serverConfig = {
+			urlBase: this.$.signinPanel.getUrlBase(),
+			insecure: this.$.signinPanel.getInsecure(),
+			useCustomServer: this.$.signinPanel.getUseCustomServer(),
+			customServer: this.$.signinPanel.getCustomServer()
+		}
 		enyo.log("New user server config: " + JSON.stringify(this.serverConfig));
 		Prefs.setCookie("serverConfig", this.serverConfig);
-		self.api = new checkmate.api(self.serverConfig);
+		this.$.myCheckmate.serverConfig = this.serverConfig;
 
 		enyo.log("New user move: " + this.$.signinPanel.move);
-		self.api.notation = this.$.signinPanel.move;
-		Prefs.setCookie("move", this.move);
+		this.$.myCheckmate.notation = this.$.signinPanel.move;
+		Prefs.setCookie("move", this.$.signinPanel.move);
 
 		enyo.log("New user grandmaster: " + this.$.signinPanel.grandmaster);
-		self.api.grandmaster = this.$.signinPanel.grandmaster;
-		Prefs.setCookie("grandmaster", this.grandmaster);
+		this.$.myCheckmate.grandmaster = this.$.signinPanel.grandmaster;
+		Prefs.setCookie("grandmaster", this.$.signinPanel.grandmaster);
 
 		this.$.contentPanels.getActive().destroy();
 		this.$.contentPanels.components.pop();
 		this.$.contentPanels.setIndex(1);
 		this.$.contentPanels.render();
 		this.$.contentPanels.draggable = true;
-		
-		window.setTimeout(this.loadTaskList.bind(this), 500);
+		this.$.buttonLoginOut.setContent("Log Out");
+		window.setTimeout(this.loadTaskList.bind(this), 800);
 	},
+	/* UI Events */
 	newTaskTap: function() {
 		this.selectedTask = null;
 		this.$.list.reset();
@@ -160,28 +176,27 @@ enyo.kind({
 		this.$.contentPanels.setIndex(0);
 	},
 	updateTap: function(inSender, inEvent) {
+		this.errorCount = 0;
 		this.loadTaskList();
 	},
 	sweepTap: function(inSender, inEvent) {
 		this.$.mySoundPlayer.soundSweep.Play();
-		var self = this;
-		
-		self.api.cleanupTasks(function(inResponse) {
+		this.$.myCheckmate.cleanupTasks(function(inResponse) {
 				if (inResponse && inResponse.tasks) {
 					//enyo.log("sweep tasks response! " + JSON.stringify(inResponse));
-					self.data = inResponse.tasks;
-					self.$.list.setCount(self.data.length);
-					self.$.list.reset();
+					this.data = inResponse.tasks;
+					this.$.list.setCount(this.data.length);
+					this.$.list.reset();
 
-					for (var i=0;i<self.data.length;i++) {
-						if (self.selectedTask && self.selectedTask.guid == self.data[i].guid)
-							self.$.list.select(i);
+					for (var i=0;i<this.data.length;i++) {
+						if (this.selectedTask && this.selectedTask.guid == this.data[i].guid)
+							this.$.list.select(i);
 					}
 				} else {
-					self.showAPIError(inResponse);
+					this.handleAPIError(inResponse);
 				}
-			}, function(){
-				self.showAPIError(inResponse);
+			}.bind(this), function(){
+				this.handleAPIError(inResponse);
 			}
 		);
 	},
@@ -216,7 +231,7 @@ enyo.kind({
 					this.$.mySoundPlayer.soundUncheck.Play();
 				return true;
 			} else {
-				enyo.log("setting task details...");
+				enyo.log("Setting task details...");
 				this.selectedTask = this.data[inEvent.index];
 				this.$.taskDetails.taskGuid = this.data[inEvent.index].guid;
 				this.$.taskDetails.taskTitle = this.data[inEvent.index].title || "";
@@ -224,9 +239,9 @@ enyo.kind({
 				this.$.taskDetails.render();
 			}
 		} else {
-			enyo.log("the active panel is " + this.$.contentPanels.getActive())
+			enyo.log("The active panel is " + this.$.contentPanels.getActive())
 			if (this.$.contentPanels.getActive() == "app_mainView_taskDetails [checkmate.DetailViewer]") {
-				enyo.log("tap cancelled because detail is editing!");
+				enyo.log("Tap cancelled because detail is editing!");
 				return true;
 			} else {
 				this.$.taskDetails.editCancelTap();
@@ -253,14 +268,14 @@ enyo.kind({
 		}
 		if (this.$.taskDetails.inEdit)
 		{
-			enyo.warn("dragged while editing, but can't be cancelled");
+			enyo.warn("Dragged while editing, but can't be cancelled");
 			return;
 		}
 		var movedItem = enyo.clone(this.data[inEvent.reorderFrom]);
 		var evictedItem = this.data[inEvent.reorderTo];
 
 		if (movedItem.sortPosition != evictedItem.sortPosition) {
-			enyo.warn("list has been reordered, old sortPos: " + movedItem.sortPosition + " swapping with " + evictedItem.sortPosition);
+			enyo.warn("List has been reordered, old sortPos: " + movedItem.sortPosition + " swapping with " + evictedItem.sortPosition);
 			this.data.splice(inEvent.reorderFrom,1);
 			this.data.splice((inEvent.reorderTo),0,movedItem);
 	
@@ -272,7 +287,7 @@ enyo.kind({
 			this.$.list.reset();
 			this.updateTaskFromList(this.data);
 		} else {
-			enyo.log("list resort did not result in any changes and will be ignored");
+			enyo.log("List resort did not result in any changes and will be ignored");
 		}
 	},
 	listItemSwipeStart: function(inSender, inEvent) {
@@ -310,19 +325,19 @@ enyo.kind({
 		}
 	},
 	listItemSwipeDone: function(inSender, inEvent) {
-		enyo.log("item swipe has completed");
+		enyo.log("Item swipe has completed");
 		var i = inEvent.index;
 		if(!this.data[i]) {
 			return;
 		}
 		if (this.$.taskDetails.inEdit)
 		{
-			enyo.log("swiping while editing!");
+			enyo.log("Swiping while editing!");
 			return;
 		}
 		if (this.data[i].sortPosition != -1) {
 			if (inEvent.xDirection == 1) {
-				enyo.log("swipe for show/hide info panel")
+				enyo.log("Swipe for show/hide info panel")
 				this.selectedTask = this.data[inEvent.index];
 				//enyo.log("selected task is: " + this.selectedTask.guid);
 				this.$.list.select(inEvent.index);
@@ -336,7 +351,7 @@ enyo.kind({
 					this.$.contentPanels.setIndex(1);
 			}
 			else {
-				enyo.log("swipe for item delete");
+				enyo.log("Swipe for item delete");
 				this.$.list.deselect(inEvent.index);
 				this.data[inEvent.index].oldSortPosition = this.data[inEvent.index].sortPosition;
 				this.data[inEvent.index].sortPosition = "-1";
@@ -344,7 +359,7 @@ enyo.kind({
 				window.setTimeout(this.doDelayedItemDelete.bind(this, this.data[inEvent.index]), 3000);
 			}
 		} else {
-			enyo.log("swipe for cancel delete");
+			enyo.log("Swipe to cancel delete");
 			this.$.swipeItem.removeClass("itemDeleting");
 			this.data[inEvent.index].sortPosition = this.data[inEvent.index].oldSortPosition;
 			this.selectedTask = this.data[inEvent.index];
@@ -354,10 +369,10 @@ enyo.kind({
 	},
 	doDelayedItemDelete: function(theItem) {
 		if (this.cancelDeletes.indexOf(theItem.guid) != -1) {
-			enyo.log("I will cancel the delete of the item with title: " + theItem.title);
+			enyo.log("Canceling delete of the item with title: " + theItem.title);
 			this.cancelDeletes.splice(this.cancelDeletes.indexOf(theItem.guid), 1);
 		} else {
-			enyo.log("I should now delete the item with title: " + theItem.title);
+			enyo.log("Deleting the item with title: " + theItem.title);
 			//Don't trust previous index
 			var itemToDelete = -1;
 			for (var i=0;i<this.data.length;i++) {
@@ -380,95 +395,67 @@ enyo.kind({
 	},
 	updateTaskFromList: function(newItemData) {
 		var self = this;
-		self.newItemData = newItemData;
-		self.api.updateTask(newItemData,
-			function(inResponse) {
-				if (inResponse && inResponse.tasks) {
-					/* //This doesn't seem to be necessary (except for error checking)
-					enyo.log("update task response! " + JSON.stringify(inResponse));
-					//Find the task to update
-					for (var i=0;i<inResponse.tasks;i++) {
-						var newTask = inResponse.tasks[i];
-						for (var j=0;j<self.data.length;j++) {
-							if (self.data[j].guid == newTask.guid) {
-								enyo.log("updating task at position " + j);
-								self.data[j] = newTask;
-								self.$.list.renderRow(j);
-							}
-						}	
-					}
-					*/
-					for (var i=0;i<self.data.length;i++) {
-						if (self.selectedTask && self.selectedTask.guid == self.data[i].guid)
-							self.$.list.select(i);
-					}
-				} else {
-					self.showAPIError(inResponse);
-				}
-			}, function(){
-				self.showAPIError(inResponse);
-			}
-		);
+		this.newItemData = newItemData;
+		this.$.myCheckmate.updateTask(newItemData);
 	},
 	updateTaskFromDetails: function(inSender, inEvent) {
-		var self = this;
-		self.$.contentPanels.setIndex(1);
+		this.$.contentPanels.setIndex(1);
 		
 		//Determine if this is a task edit or create
 		var foundTask = false
-		if (self.selectedTask) {
+		if (this.selectedTask) {
 			//edit
-			for (var i=0;i<self.data.length;i++) {
-				if (self.selectedTask.guid == self.data[i].guid)
+			for (var i=0;i<this.data.length;i++) {
+				if (this.selectedTask.guid == this.data[i].guid)
 				{
-					self.data[i].title = self.$.taskDetails.taskTitle;
-					self.data[i].notes = self.$.taskDetails.taskNotes;
-					foundTask = self.data[i];
+					this.data[i].title = this.$.taskDetails.taskTitle;
+					this.data[i].notes = this.$.taskDetails.taskNotes;
+					foundTask = this.data[i];
 				}
 			}
-			self.selectedTask = null;
-			self.$.list.refresh();
+			this.selectedTask = null;
+			this.$.list.refresh();
 		}
-		if (!foundTask && self.$.taskDetails.taskTitle != "") {
+		if (!foundTask && this.$.taskDetails.taskTitle != "") {
 			//create
 			foundTask = {
 				guid: "new",
-				title: self.$.taskDetails.taskTitle,
-				notes: self.$.taskDetails.taskNotes,
+				title: this.$.taskDetails.taskTitle,
+				notes: this.$.taskDetails.taskNotes,
 				completed: false,
 			}
 		}
 		//Perform the update on the server
 		if(foundTask) {
-			self.api.updateTask(foundTask,
+			this.$.myCheckmate.updateTask(foundTask,
 				function(inResponse) {	
 					if (inResponse && inResponse.tasks) {
 						//enyo.log("update task response! " + JSON.stringify(inResponse))
-						self.data = inResponse.tasks;
-						self.$.list.setCount(self.data.length);
+						this.data = inResponse.tasks;
+						this.$.list.setCount(this.data.length);
 						var selectIndex = -1;
 						if (foundTask.guid == "new") {
-							self.$.contentPanels.setIndex(1);
-							self.selectedTask = null;
-							self.$.taskDetails.taskTitle = "";
-							self.$.taskDetails.taskNotes = "";
-							self.$.taskDetails.render();
+							this.$.contentPanels.setIndex(1);
+							this.selectedTask = null;
+							this.$.taskDetails.taskTitle = "";
+							this.$.taskDetails.taskNotes = "";
+							this.$.taskDetails.render();
 						}
 						else {
-							for (var i=0;i<self.data.length;i++) {
-								if (foundTask.guid == self.data[i].guid)
+							for (var i=0;i<this.data.length;i++) {
+								if (foundTask.guid == this.data[i].guid)
 									selectIndex = i;
 							}
-							self.$.list.select(selectIndex);
+							this.$.list.select(selectIndex);
 						}
 					} else {
-						self.showAPIError(inResponse);	
+						this.handleAPIError(inResponse);	
 					}
 				}
 			);
 		}
 		else {
-			self.showAPIError(inResponse);
+			this.handleAPIError(inResponse);
 		}
 	},
 	checkTasksEqual: function(task1, task2) {
@@ -485,87 +472,18 @@ enyo.kind({
 			isEqual = false;
 		return isEqual;
 	},
+	/* API Functions */
 	loadTaskList: function() {
-		enyo.log("doing thorough update!");
+		enyo.log("Doing thorough update!");
 		window.clearInterval(updateInt);
-		var self = this;
-		self.startSpinner();
-		self.api.getTasks( 
-			function(inResponse) {
-				if (inResponse && inResponse.tasks) {
-					self.data = inResponse.tasks;
-					self.$.list.setCount(self.data.length);
-					self.$.list.reset();
-				} else {
-					self.showAPIError(inResponse);
-				}
-				self.$.buttonLoginOut.setContent("Log Out");
-				self.stopSpinner();
-			}, function(inResponse) {
-				self.showAPIError(inResponse);
-				self.$.buttonLoginOut.setContent("Log Out");
-				self.stopSpinner();
-			}
-		);
-		updateInt = window.setInterval(this.reloadTaskList.bind(this), updateRate);
+		this.startSpinner();
+		this.$.myCheckmate.getTasks();
 	},
-	reloadTaskList: function() {
-		enyo.log("doing background update!");
+	doBackgroundRefresh: function() {
+		enyo.log("Doing background update!");
 		window.clearInterval(updateInt);
-		var self = this;
-		self.startSpinner();
-		self.api.getTasks( 
-			function(inResponse) {
-				if (inResponse && inResponse.tasks) {
-					enyo.log("response data length: " + inResponse.tasks.length);
-					//Check if the list length has changed
-					isDirty = false;
-					if (inResponse.tasks.length != self.data.length) {
-						enyo.log("list length has changed! the list needs to be redrawn.");
-						isDirty = true;
-					}
-					knownGuids = [];
-					for (var i=0;i<self.data.length;i++) {
-						knownGuids.push(self.data[i].guid);
-					}
-					//Update individual tasks if we can
-					for (var i=0;i<inResponse.tasks.length;i++) {
-						if (isDirty)
-							break;
-
-						//Check if the new list has items we don't know about
-						if (knownGuids.indexOf(inResponse.tasks[i].guid) == -1) {
-							enyo.log("list items have changed! the list needs to be redrawn.");
-							isDirty = true;
-						}
-						if (!isDirty && !self.checkTasksEqual(self.data[i], inResponse.tasks[i])) {
-							enyo.log("row " + i + " has changed and needs to be updated!");
-							enyo.log("current: " + self.data[i]);
-							enyo.log("new:     " + inResponse.tasks[i]);
-							self.data[i] = inResponse.tasks[i];
-							self.$.list.renderRow(i);
-							if (self.data[i].sortPosition != inResponse.tasks[i].sortPosition) {
-								enyo.warn("row " + i + " needs to be re-positioned");
-							}
-						}
-					}
-					//Update the whole list if we can't
-					if (isDirty){
-						self.data = inResponse.tasks;
-						self.$.list.setCount(self.data.length);
-						self.$.list.reset();
-					}
-					//TODO: Can we make this even more individual, instead of throwing out the whole list?
-				} else {
-					self.showAPIError(inResponse);
-				}
-				self.stopSpinner();
-			}, function(inResponse) {
-				self.showAPIError(inResponse);
-				self.stopSpinner();
-			}
-		);
-		updateInt = window.setInterval(this.reloadTaskList.bind(this), updateRate);
+		this.startSpinner();
+		this.$.myCheckmate.processQueue();
 	},
 	startSpinner: function() {
 		this.$.buttonUpdate.addClass("active");
@@ -576,27 +494,132 @@ enyo.kind({
 		window.setTimeout(function() {
 			this.$.buttonUpdate.removeClass("active");
 			this.$.imgSync.setAttribute("src", "assets/sync.png");
-			this.$.buttonUpdate.disabled = false;
+			this.$.buttonUpdate.disabled = true;
 		}.bind(this), 1200);
 	},
-	showAPIError: function(errorResponse) {
-		enyo.log("handling error" + JSON.stringify(errorResponse));
-		if (errorResponse) {
-			//enyo.warn("An API called resulted in an error: " + JSON.stringify(errorResponse));
-			if (errorResponse) {
-				if (errorResponse.failed) {
-					if (errorResponse.xhrResponse && errorResponse.xhrResponse.body)
-						this.showModal(errorResponse.xhrResponse.body);
-					else
-						this.showModal("An error occured during an API call. Check your server settings and network connection. If you are self-hosting, make sure you have CORS setup correctly.");
-				}
-				else if (errorResponse.error)
-					this.showModal("<b>Error</b><br><br>" + errorResponse.error);
-				else
-					this.showModal("An un-handled error occured during an API call. Check your server settings and network connection. If you are self-hosting, make sure you have CORS setup correctly.");
+	backoffToOffline: function(reason) {
+		if (reason) {
+			enyo.warn("Backing off to offline, error count: " + this.errorCount + " because: " + reason);
+			window.clearInterval(updateInt);
+			updateInt = window.setInterval(this.doBackgroundRefresh.bind(this), updateRate);
+		}
+		if (this.errorCount >= 3) {
+			enyo.error("Error count exceeded back-off threshold, going offline");
+			this.showAsOffline();
+		}
+	},
+	showAsOffline: function() {
+		window.clearInterval(updateInt);
+		this.stopSpinner();
+		window.setTimeout(function() {
+			this.$.buttonUpdate.removeClass("active");
+			this.$.imgSync.setAttribute("src", "assets/offline.png");
+			this.$.buttonUpdate.disabled = false;
+		}.bind(this), 1800);
+		this.errorCount = 0;
+	},
+	handlePostSuccess: function(inRequest, inResponse) {
+		if (inResponse && inResponse.tasks) {
+			for (var i=0;i<this.data.length;i++) {
+				if (this.selectedTask && this.selectedTask.guid == this.data[i].guid)
+					this.$.list.select(i);
 			}
+			this.loadTaskList();
 		} else {
-			enyo.warn("An API called resulted in an unknown error. Check your server settings and network connection. If you are self-hosting, make sure you have CORS setup correctly.");
+			this.handleAPIError(inResponse);
+		}
+	},
+	handlePostError: function(inRequest, inResponse){
+		enyo.warn("Task list update error occurred!");
+		this.handleAPIError(inResponse);
+		this.stopSpinner();
+	},
+	handleRefreshSuccess: function(inRequest, inResponse) {
+		this.stopSpinner();
+		
+		if (inResponse && inResponse.tasks) {
+			//Check if the list length has changed
+			isDirty = false;
+			if (inResponse.tasks.length != this.data.length) {
+				enyo.log("List length has changed, the list needs to be redrawn.");
+				isDirty = true;
+			}
+			knownGuids = [];
+			for (var i=0;i<this.data.length;i++) {
+				knownGuids.push(this.data[i].guid);
+			}
+			//Update individual tasks if we can
+			for (var i=0;i<inResponse.tasks.length;i++) {
+				if (isDirty)
+					break;
+
+				//Check if the new list has items we don't know about
+				if (knownGuids.indexOf(inResponse.tasks[i].guid) == -1) {
+					enyo.log("List items have changed, the list needs to be redrawn.");
+					isDirty = true;
+				}
+				if (!isDirty && !this.checkTasksEqual(this.data[i], inResponse.tasks[i])) {
+					enyo.log("Row " + i + " has changed and needs to be updated!");
+					enyo.log("Current: " + JSON.stringify(this.data[i]));
+					enyo.log("New:     " + JSON.stringify(inResponse.tasks[i]));
+					this.data[i] = inResponse.tasks[i];
+					this.$.list.renderRow(i);
+					if (this.data[i].sortPosition != inResponse.tasks[i].sortPosition) {
+						enyo.log("Row " + i + " needs to be re-positioned");
+					}
+				}
+			}
+			//Update the whole list if we can't
+			if (isDirty){	 //TODO: Can we make this even more individual, instead of throwing out the whole list?
+				this.data = inResponse.tasks;
+				this.$.list.setCount(this.data.length);
+				this.$.list.reset();
+			}
+			
+			//Schedule next update
+			enyo.log("Refresh success, scheduling next refresh");
+			window.clearInterval(updateInt);
+			updateInt = window.setInterval(this.doBackgroundRefresh.bind(this), updateRate);
+		} else {
+			enyo.log("Unknown refresh response: " + inResponse);
+			this.handleAPIError(inResponse);
+		}
+	}, 
+	handleRefreshError: function(inResponse) {
+		enyo.warn("Task list refresh error occurred!");
+		this.handleAPIError(inResponse);
+		this.stopSpinner();
+	},
+	/* UI Controls */
+	handleAPIError: function(errorResponse) {
+		this.errorCount++;
+		if (errorResponse) {
+			enyo.warn("An API called resulted in an error: " + JSON.stringify(errorResponse));
+			if (errorResponse.failed) {
+				if (errorResponse.xhrResponse && errorResponse.xhrResponse.body) {
+					this.showModal(errorResponse.xhrResponse.body);
+					this.showAsOffline();
+				}
+				else {
+					if (errorResponse.xhrResponse.status) {
+						this.backoffToOffline("API call with error code: " + errorResponse.xhrResponse.status);
+					}
+					else {
+						this.backoffToOffline("API call with no status");
+					}
+				}
+			}
+			else if (errorResponse.error) {
+				this.showModal("<b>Error</b><br><br>" + errorResponse.error);
+				this.showAsOffline();
+			}
+			else {
+				this.showModal("An error occured during an API call. Check your server settings and network connection. If you are self-hosting, make sure you have CORS setup correctly.");
+				this.showAsOffline();
+			}	
+		} else {
+			enyo.warn("An API call resulted in an unknown error. Check your server settings and network connection. If you are self-hosting, make sure you have CORS setup correctly.");
+			this.backoffToOffline("Unknown Error");
 		}
 	},
 	showModalFromLogin: function() {

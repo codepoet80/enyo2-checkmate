@@ -8,29 +8,31 @@ enyo.kind({
 	notation: null,
 	grandmaster: null,
 	updateQueue: [],
-	queuePos: -1,
+	onPostSuccess: function() {},
+	onPostError: function() {},
+	onRefreshSuccess: function() {},
+	onRefreshError: function() {},
 	create: function() {
 		this.inherited(arguments);
 		if (arguments && arguments[0]) {
-			enyo.log("checkmate API created with args: " + JSON.stringify(arguments[0]));
-			this.serverConfig = arguments[0];
+			enyo.log("checkmate API created!");
 		}
 	},
-	serverConfig: { 
-		urlBase: "",
+	published: { 
+		urlBase: "checkmate.wosa.link",
 		insecure: false,
 		useCustomServer: false,
 		customServer:""
 	},
 	buildURL: function(actionType) {
-		var urlBase = this.serverConfig.urlBase;
-		if (this.serverConfig.useCustomServer == true && this.serverConfig.customServer != "") {
-			urlBase = this.serverConfig.customServer;
+		var urlBase = this.getUrlBase();
+		if (this.getUseCustomServer() == true && this.getCustomServer() != "") {
+			urlBase = this.getCustomServer();
 		}
 		if (urlBase.indexOf("http://") == -1 && urlBase.indexOf("https://") == -1) {
 			urlBase = "https://" + urlBase;
 		}
-		if (this.serverConfig.insecure) {
+		if (this.getInsecure()) {
 			enyo.warn("Warning, using insecure URL base due to setting.");
 			urlBase = urlBase.replace("https://", "http://");
 		} else {
@@ -60,7 +62,7 @@ enyo.kind({
 		}, this);
 		request.go();
 	},
-	getTasks: function(success, failure) {
+	getTasks: function() {
 		useUrl = this.buildURL("read-notation") + "?move=" + this.notation;
 		enyo.log("Getting task list with url: " + useUrl);
 		
@@ -70,22 +72,39 @@ enyo.kind({
 			headers: {grandmaster: this.grandmaster},
 			cacheBust: true
 		});
-
-		request.error(failure);
-		request.response(function(inRequest, inResponse) {
-			success(inResponse);
-		}, this);
+		request.error(this.onRefreshError, this);
+		request.response(this.onRefreshSuccess, this);
 		request.go();
 	},
+	updateTask: function(taskData) {
+		this.updateQueue.push(taskData);
+		enyo.log("New update added to queue, length now: " + this.updateQueue.length);
+		this.processQueue();
+	},
 	processQueue: function() {
-		if (this.queuePos < this.updateQueue.length) {
-			taskData = this.updateQueue[this.queuePos];
+		if (this.updateQueue.length > 0) {
+			enyo.log("Processing update queue with " + this.updateQueue.length + " items");
+			taskData = this.updateQueue[0];
+			this.doUpdateTask(taskData);
+		} else {
+			enyo.log("No updates queued.");
+			this.getTasks();
 		}
 	},
-	updateTask: function(taskData, success, failure) {
+	processQueueSuccess: function(inSender, inResponse) {
+		this.updateQueue.shift();
+		if (this.updateQueue.length == 0) {
+			enyo.log("Finished processing updateQueue items!");
+			this.onPostSuccess(inSender, inResponse);
+			this.getTasks();
+		} else {
+			this.processQueue();
+		}
+	},
+	doUpdateTask: function(taskData) {
 		useUrl = this.buildURL("update-notation") + "?move=" + this.notation;
 		enyo.log("Updating task list with url: " + useUrl);
-		enyo.log("using data: " + JSON.stringify(taskData));
+		enyo.log("Using data: " + JSON.stringify(taskData));
 
 		var request = new enyo.Ajax({
 			url: useUrl,
@@ -95,10 +114,8 @@ enyo.kind({
 			cacheBust: true
 		});
 
-		request.error(failure);
-		request.response(function(inRequest, inResponse) {
-			success(inResponse);
-		}, this);
+		request.error(this.onPostError);
+		request.response(this.processQueueSuccess, this);
 		request.go();
 	},
 	cleanupTasks: function(success, failure) {
@@ -117,5 +134,5 @@ enyo.kind({
 			success(inResponse);
 		}, this);
 		request.go();
-	},
+	}
 });
