@@ -9,8 +9,7 @@ $subtitle = " | Your To Do List -- anywhere!";
 $description = "Check Mate is a cross platform to-do list app created by provided by webOS Archive for retro and modern devices.";
 $github = "https://github.com/codepoet80/checkmate-service";
 $pwaLink = "https://store.app/checkmate-wosa-link";
-$playId = "com.webosarchive.checkmatehd";
-$playLink = "https://play.google.com/store/apps/details?id=" . $playId;
+$githubLink = "https://github.com/codepoet80/enyo2-checkmate/releases";
 $museumLink = "https://appcatalog.webosarchive.org/showMuseum.php?search=check+mate";
 $icon = "assets/icon.png";
 
@@ -37,7 +36,6 @@ if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
   <meta name="twitter:site" content="@webOSArchive">
   <meta name="twitter:title" content="<?php echo $title; ?>">
   <meta name="twitter:description" content="<?php echo $description; ?>">
-  <meta name="twitter:app:id:googleplay" content="<?php echo $playId; ?>">
 
   <title><?php echo $title . $subtitle; ?></title>
   
@@ -56,7 +54,7 @@ echo file_get_contents("https://www.webosarchive.org/menu.php?docRoot=" . $docRo
     <div id="content" align="left">
       <h1><img src="<?php echo $icon;?>" width="60" height="60" alt=""/><?php echo $title; ?></h1>
       <p><?php echo $description; ?></p>
-      <p>Available for most platforms as a Progressive Web App, on Google Play for Android, and the webOS App Museum for webOS devices.</p>
+      <p>Available for most platforms as a Progressive Web App, on Android, and the webOS App Museum for webOS devices.</p>
       <p>View the source and contribute on <?php echo "<a href='" . $github . "'>GitHub</a>"?>.</p>
       <p class="center">
         <?php if (isset($pwaLink)) { ?>
@@ -64,9 +62,9 @@ echo file_get_contents("https://www.webosarchive.org/menu.php?docRoot=" . $docRo
           <img src="<?php echo $PROTOCOL . "://www.webosarchive.org/app-template/"?>pwa-badge.png" width="200" height="59" alt="Install the PWA" />
         </a>
         <?php } ?>
-        <?php if (isset($playLink)) { ?>
-        <a class="download-link" href="<?php echo $playLink; ?>">
-          <img src="<?php echo $PROTOCOL . "://www.webosarchive.org/app-template/"?>play-badge.png" width="200" height="59" alt="Get it on Google play" />
+        <?php if (isset($githubLink)) { ?>
+        <a class="download-link" href="<?php echo $githubLink; ?>">
+          <img src="<?php echo $PROTOCOL . "://www.webosarchive.org/app-template/"?>github-badge.png" width="200" height="59" alt="Get it on GitHub" />
         </a>
         <?php } ?>
         <?php if (isset($museumLink)) { ?>
