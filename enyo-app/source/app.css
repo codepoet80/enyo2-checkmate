@@ -1,6 +1,8 @@
 @media all and (display-mode: standalone) {
-    .detailToolbarBottom {
-        border-bottom: 22px solid black;
+    @supports (-webkit-touch-callout: none) {
+        .detailToolbarBottom {
+            border-bottom: 22px solid black;
+        }
     }
 }
 /* on small devices, make each panel fit to the app width */
