@@ -1,3 +1,8 @@
+@media all and (display-mode: standalone) {
+    .detailToolbarBottom {
+        border-bottom: 22px solid black;
+    }
+}
 /* on small devices, make each panel fit to the app width */
 .app-panels > * {
     width: 320px;

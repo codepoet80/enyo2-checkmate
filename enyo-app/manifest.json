@@ -1,9 +1,15 @@
 {
  "name": "Check Mate HD",
  "short_name": "CheckMate",
- "start_url": "/app/index.html",
- "id": "/app/manifest.json",
+ "description": "Cross-platform to-do list app with retro device compatibility",
+ "start_url": "./index.html",
+ "id": "./manifest.json",
  "display": "standalone",
+ "orientation": "portrait-primary",
+ "theme_color": "#000000",
+ "background_color": "#000000",
+ "categories": ["productivity", "utilities"],
+ "lang": "en",
  "icons": [
     {
       "src": "icons/SmallTile.scale-100.png",

@@ -51,7 +51,7 @@ enyo.kind({
 						]}
 					]
 				},
-				{kind: "onyx.Toolbar", classes:"toolbar", components: [
+				{kind: "onyx.Toolbar", classes:"detailToolbarBottom", components: [
 					{kind: 'onyx.Grabber', ondragstart: 'grabberDragstart', ondrag: 'grabberDrag', ondragfinish: 'grabberDragFinish'},
 					{kind: "onyx.Button", classes:"toolButton", ontap: "newTaskTap", components: [
 						{tag: "img", attributes: {src: "assets/plus.png"}},

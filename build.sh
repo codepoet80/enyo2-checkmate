@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mydir=$(cd `dirname $0` && pwd)
-mkdir $mydir/bin/ -p
+mkdir -p $mydir/bin/
 
 if [ "$1" = "clean" ]; then
     echo -n "Cleaning up..."
@@ -60,14 +60,14 @@ if [ $webOS -eq 1 ]; then
     rm -rf $mydir/bin/*.ipk
     rm -rf $mydir/bin/www/*
     #swap in old cordova
-    cp $mydir/cordova-webos.js $mydir/enyo-app/cordova.js -f
+    cp -f $mydir/cordova-webos.js $mydir/enyo-app/cordova.js
     #build
     $mydir/enyo-app/tools/deploy.sh -w $verbose
     #stub out old cordova
     echo "/* For backward compatibility with webOS, do not delete */" > $mydir/enyo-app/cordova.js
-    cp $mydir/enyo-app/cordova.js $mydir/enyo-app/deploy/cordova.js -f
+    cp -f $mydir/enyo-app/cordova.js $mydir/enyo-app/deploy/cordova.js
     #copy build output
-    mv $mydir/enyo-app/deploy/bin/*.ipk $mydir/bin -f
+    mv -f $mydir/enyo-app/deploy/bin/*.ipk $mydir/bin
 else
     echo "Building for www..."
     $mydir/enyo-app/tools/deploy.sh $verbose
@@ -79,11 +79,11 @@ if [ $android -eq 1 ]; then
     rm -rf $mydir/bin/*.aab
     dirname=$mydir/cordova-wrapper
     cd $mydir/cordova-wrapper
-    mkdir $mydir/cordova-wrapper/www -p
+    mkdir -p $mydir/cordova-wrapper/www
     rm -rf $mydir/cordova-wrapper/www/*
     cordova platform add android
     echo "Copying to Cordova..."
-    cp $mydir/enyo-app/deploy/* $mydir/cordova-wrapper/www -R
+    cp -R $mydir/enyo-app/deploy/* $mydir/cordova-wrapper/www
     cd $mydir/cordova-wrapper
     echo "Building Cordova..."
     #echo "using args $argcordova"
@@ -95,8 +95,8 @@ fi
 
 echo "Cleaning up..."
 if [ $www -eq 1 ]; then
-    mkdir $mydir/bin/www -p
-    cp $mydir/enyo-app/deploy/* $mydir/bin/www/ -R
+    mkdir -p $mydir/bin/www
+    cp -R $mydir/enyo-app/deploy/* $mydir/bin/www/
 else
     rm -rf $mydir/bin/www
 fi

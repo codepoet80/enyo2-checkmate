@@ -41,18 +41,65 @@
 		<script src="build/enyo.js" charset="utf-8"></script>
 		<script src="build/app.js" charset="utf-8"></script>
 		<script>
-			//Register service worker (stub)
+			// Progressive Web App - Service Worker Registration
 			if ('serviceWorker' in navigator) {
 				window.addEventListener('load', function() {
 					navigator.serviceWorker.register('serviceworker.js').then(function(registration) {
-					// Registration was successful
-					console.log('ServiceWorker registration successful with scope: ', registration.scope);
+						console.log('ServiceWorker registration successful with scope: ', registration.scope);
+						
+						// Check for service worker updates
+						registration.addEventListener('updatefound', function() {
+							var newWorker = registration.installing;
+							console.log('ServiceWorker: New version installing');
+							
+							newWorker.addEventListener('statechange', function() {
+								if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+									console.log('ServiceWorker: New version ready, will activate on next page load');
+									// Could show update notification to user here
+								}
+							});
+						});
+						
+						// Listen for service worker messages
+						navigator.serviceWorker.addEventListener('message', function(event) {
+							if (event.data && event.data.type === 'CACHE_STATUS') {
+								console.log('Cache status:', event.data);
+							}
+						});
+						
 					}, function(err) {
-					// registration failed :(
-					console.log('ServiceWorker registration failed: ', err);
+						console.log('ServiceWorker registration failed: ', err);
 					});
 				});
+				
+				// Handle offline/online status
+				window.addEventListener('online', function() {
+					console.log('App: Back online');
+					// Could update UI to show online status
+				});
+				
+				window.addEventListener('offline', function() {
+					console.log('App: Gone offline - PWA cache will serve content');
+					// Could update UI to show offline status
+				});
+			} else {
+				console.log('ServiceWorker: Not supported in this browser');
 			}
+			
+			// PWA Install prompt handling
+			var deferredPrompt;
+			window.addEventListener('beforeinstallprompt', function(e) {
+				console.log('PWA: Install prompt available');
+				e.preventDefault();
+				deferredPrompt = e;
+				// Could show custom install button here
+			});
+			
+			window.addEventListener('appinstalled', function(evt) {
+				console.log('PWA: App was installed');
+				deferredPrompt = null;
+			});
+			
 
 			//Stop iOS bouncy overscroll
 			function onTouchStart(e) {
