@@ -180,3 +180,17 @@
     -moz-border-radius: 10px;
     -o-border-radius: 10px;
 }
+
+@media (prefers-color-scheme: dark) {
+        .enyo-list-page {
+                background-color: darkgray;
+        }
+        .taskList {
+                background-color: darkgray; 
+        }
+        .tasklistItem { 
+                background-color: darkgray;
+                border-bottom: 1px solid black;
+                color: black;
+        }
+}
