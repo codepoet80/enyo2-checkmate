@@ -39,6 +39,9 @@ Call the script, passing a list of the platforms you want to build, with a space
 
 If you prefer to be in control, check out the other docs in this folder for platform-specific details.
 
+I have this working with Node 14.21.3 + Cordova 10.0.0 + cordova-android 9.1.0
+
+You may need to specify the cordova platform version with: `cordova platform add android@9.1.0`
 
 ## Why
 
