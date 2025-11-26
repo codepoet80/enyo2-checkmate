@@ -27,7 +27,13 @@ The project has been upgraded to modern tooling while maintaining backward compa
 
 ### Required Software:
 - **Node.js**: v24.11.1 LTS (managed via nvm)
-- **Java**: JDK 17 or higher (managed via SDKMAN)
+- **Java**:
+  - **Oracle JDK 8** (1.8.x) for webOS/LuneOS builds
+    - Required at `/opt/jdk/jdk1.8.0_*` (or similar system location)
+    - Must output "java version" format (not "openjdk version")
+    - Reason: palm-package tool requires Oracle JDK format
+  - **JDK 17** for Android builds (managed via SDKMAN)
+  - *Note: The build script automatically switches between versions*
 - **Cordova**: 13.0.0+ (now installed locally via npm)
 - **cordova-android**: 14.0.1 (supports Android 12+ / API level 35)
 - **Android SDK Build Tools**: 35.0.0
@@ -42,14 +48,26 @@ The project has been upgraded to modern tooling while maintaining backward compa
    nvm install --lts
    ```
 
-2. **Install SDKMAN (Java Version Manager):**
+2. **Install SDKMAN (Java Version Manager) and Java 17:**
    ```bash
    curl -s "https://get.sdkman.io" | bash
    source ~/.sdkman/bin/sdkman-init.sh  # or restart terminal
+
+   # Install Java 17 for Android builds
    sdk install java 17.0.13-tem
    ```
 
-3. **Install Android SDK Build Tools 35.0.0:**
+3. **Install Oracle JDK 8 for webOS builds:**
+
+   The webOS `palm-package` tool requires Oracle JDK 8 (not OpenJDK) because it checks for the specific "java version" output format.
+
+   - Download Oracle JDK 8 from Oracle's website (requires account)
+   - Or check if already installed at `/opt/jdk/jdk1.8.0_*`
+   - The build script will automatically use it if found
+
+   *Note: The build script automatically switches between Oracle JDK 8 (webOS) and JDK 17 (Android) depending on the target platform.*
+
+4. **Install Android SDK Build Tools 35.0.0:**
    ```bash
    # Using Android SDK Manager (adjust path as needed)
    $ANDROID_HOME/tools/bin/sdkmanager "build-tools;35.0.0"
@@ -112,10 +130,6 @@ The application follows EnyoJS 2 framework conventions with a component-based ar
 - Uses Cordova wrapper in `cordova-wrapper/`
 - Build output: `.apk` and `.aab` files in `bin/`
 - Requires Android SDK and platform tools
-- **JCenter Migration**: Cordova-Android 9.x uses dependencies from JCenter (shut down in 2021)
-  - Automatic fix: Hook script runs after `cordova platform add android`
-  - Manual fix: Run `./fix-android-build.sh` if build fails
-  - See "Android Build Troubleshooting" section below
 
 ## EnyoJS Framework Conventions
 
@@ -193,7 +207,6 @@ The project has been upgraded from Cordova 10 / cordova-android 9.x to **Cordova
 - **Android 12+ Support**: Target SDK 35 (Android 14), minimum SDK 24 (Android 7)
 - **Modern Build Tools**: Gradle 8.13, Android Build Tools 35.0.0
 - **Java 17 Requirement**: Older Java versions (8, 11) are no longer supported
-- **JCenter Migration**: Cordova 14 no longer uses JCenter, so the old fix scripts are obsolete
 
 ### Common Build Issues
 
@@ -211,7 +224,3 @@ $ANDROID_HOME/tools/bin/sdkmanager "build-tools;35.0.0"
 **Issue: Old Node.js version causes syntax errors**
 
 Solution: Use Node.js 24+ via nvm. The project includes `.nvmrc` files to automatically select the correct version. Run `nvm use` in the project directory.
-
-### Legacy JCenter Fix Script
-
-The `fix-android-build.sh` script is **no longer needed** with Cordova 14, as it uses Maven Central by default. The script has been retained for reference but is not used in the build process.

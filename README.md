@@ -16,7 +16,9 @@ If none of those options work for you, find binaries and a web-hostable zip peri
 
 ## Dependencies
 
-See [BuildUpgrades.md](BuildUpgrades.md) for details about the modernized build system.
+Read [environment.md](environment.md) for details about the modernized build system.
+
+You will need to get the webOS SDK working. Details are at [sdk.webosarchive.org](http://sdk.webosarchive.org).
 
 ## Building
 
@@ -24,8 +26,7 @@ This app is based on [Enyo2](http://sdk.webosarchive.org), a legacy Javascript f
 
 You create your app by modifying and updating the contents of the `enyo-app` folder.
 
-The build script will help you build the app for different platforms. You specify
-which platforms to build for with command line arguments to the build script.
+The build script will help you build the app for different platforms. You specify which platforms to build for with command line arguments to the build script.
 
 Ensure the script is executable: `chmod +x build.sh`
 
