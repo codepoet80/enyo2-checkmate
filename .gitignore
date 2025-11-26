@@ -1,5 +1,5 @@
 .DS_Store
-
+.claude
 /build
 /deploy
 /cordova-wrapper/node_modules
