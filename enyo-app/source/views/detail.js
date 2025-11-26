@@ -72,11 +72,25 @@ enyo.kind({
 		this.render();
 	},
 	saveTap: function() {
+		// Prevent double-tap by disabling the button immediately
+		if (this.$.taskSave.disabled) {
+			enyo.log("Save already in progress, ignoring duplicate tap");
+			return true;
+		}
+		this.$.taskSave.setDisabled(true);
+
 		this.taskTitle = this.$.taskTitle.getValue();
 		this.taskNotes = this.$.taskNotes.getValue();
 		this.$.taskDetailTitle.setContent("Task Detail");
 		enyo.log("raising save event!");
 		this.doSave();
 		this.editCancelTap();
+
+		// Re-enable the button after a short delay
+		window.setTimeout(enyo.bind(this, function() {
+			this.$.taskSave.setDisabled(false);
+		}), 500);
+
+		return true;
 	}
 });

@@ -380,23 +380,22 @@ enyo.kind({
 		} else {
 			enyo.log("Deleting the item with title: " + theItem.title);
 			//Don't trust previous index
-			var itemToDelete = -1;
 			for (var i=0;i<this.data.length;i++) {
 				if (theItem.guid == this.data[i].guid)
 				{
-					enyo.log("current data length: " + this.data.length);
+					enyo.log("Sending delete update to server for task: " + theItem.title);
 					delete this.data[i].oldSortPosition;
-					itemToDelete = i;
 					this.updateTaskFromList(this.data[i]);
 					if (this.$.taskGuid == theItem.guid)
 						this.$.taskDetails.reset();
 					this.$.mySoundPlayer.soundDelete.Play();
+					break;
 				}
 			}
-			this.data.splice(itemToDelete, 1);
-			this.$.list.setCount(this.data.length);
-			this.$.list.refresh();
-			enyo.log("after delete data length: " + this.data.length);
+			// Note: Don't remove from local data here! The task has sortPosition = "-1"
+			// and will be filtered out by the server response. Removing it immediately
+			// causes a race condition where background refreshes bring it back if the
+			// server hasn't processed the delete yet.
 		}
 	},
 	updateTaskFromList: function(newItemData) {
@@ -406,7 +405,7 @@ enyo.kind({
 	},
 	updateTaskFromDetails: function(inSender, inEvent) {
 		this.$.contentPanels.setIndex(1);
-		
+
 		//Determine if this is a task edit or create
 		var foundTask = false
 		if (this.selectedTask) {
@@ -433,36 +432,13 @@ enyo.kind({
 		}
 		//Perform the update on the server
 		if(foundTask) {
-			this.$.myCheckmate.updateTask(foundTask,
-				function(inResponse) {	
-					if (inResponse && inResponse.tasks) {
-						//enyo.log("update task response! " + JSON.stringify(inResponse))
-						this.data = inResponse.tasks;
-						this.$.list.setCount(this.data.length);
-						var selectIndex = -1;
-						if (foundTask.guid == "new") {
-							this.$.contentPanels.setIndex(1);
-							this.selectedTask = null;
-							this.$.taskDetails.taskTitle = "";
-							this.$.taskDetails.taskNotes = "";
-							this.$.taskDetails.render();
-						}
-						else {
-							for (var i=0;i<this.data.length;i++) {
-								if (foundTask.guid == this.data[i].guid)
-									selectIndex = i;
-							}
-							this.$.list.select(selectIndex);
-						}
-					} else {
-						this.handleAPIError(inResponse);	
-					}
-				}
-			);
+			this.$.myCheckmate.updateTask(foundTask);
 		}
 		else {
 			this.handleAPIError(inResponse);
 		}
+
+		return true;
 	},
 	checkTasksEqual: function(task1, task2) {
 		isEqual = true;

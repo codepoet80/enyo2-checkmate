@@ -1,6 +1,6 @@
 {
 	"id": "com.webosarchive.checkmatehd",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"vendor": "webOS Archive",
 	"type": "web",
 	"main": "index.html",

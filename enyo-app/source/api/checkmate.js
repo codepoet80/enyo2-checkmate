@@ -115,11 +115,11 @@ enyo.kind({
 		this.queueProcessing = false;
 		this.queueRetryCount = 0;
 		this.updateQueue.shift();
-		
+
 		if (this.updateQueue.length == 0) {
 			enyo.log("Finished processing updateQueue items!");
 			this.onPostSuccess(inSender, inResponse);
-			this.getTasks();
+			// Note: getTasks() is called by handlePostSuccess in main.js, no need to call it here
 		} else {
 			// Use setTimeout to prevent stack overflow on large queues
 			setTimeout(enyo.bind(this, "processQueue"), 10);
