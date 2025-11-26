@@ -423,11 +423,27 @@ enyo.kind({
 		}
 		if (!foundTask && this.$.taskDetails.taskTitle != "") {
 			//create
+			// Use timestamp-based temporary GUID to handle multiple rapid creates
+			var tempGuid = "new-" + Date.now();
+			var localTask = {
+				guid: tempGuid,
+				title: this.$.taskDetails.taskTitle,
+				notes: this.$.taskDetails.taskNotes,
+				completed: false,
+				sortPosition: this.data.length > 0 ? (this.data[0].sortPosition + 1) : 1
+			}
+			// Optimistically add new task to local list to prevent race condition
+			// The server will return the real GUID and position on next refresh
+			this.data.unshift(localTask);
+			this.$.list.setCount(this.data.length);
+			this.$.list.reset();
+			enyo.log("Optimistically added new task to local list with temp GUID: " + tempGuid);
+			// Create separate object for server with "new" as GUID
 			foundTask = {
 				guid: "new",
 				title: this.$.taskDetails.taskTitle,
 				notes: this.$.taskDetails.taskNotes,
-				completed: false,
+				completed: false
 			}
 		}
 		//Perform the update on the server
