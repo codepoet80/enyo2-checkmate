@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.webosarchive.checkmatehd" version="2.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="com.webosarchive.checkmatehd" version="2.1.0" xmlns="http://www.w3.org/ns/widgets" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>Check Mate</name>
     <description>Check Mate HD for Android - Your To Do List anywhere!</description>
     <author email="curator@webosarchive.org" href="https://checkmate.webosarchive.org">
@@ -13,7 +13,21 @@
     <allow-navigation href="data:*" />
     <access origin="*" />
     <preference name="Scheme" value="http" />
+
+    <!-- Splash screen configuration -->
+    <preference name="SplashScreenDelay" value="2000" />
+    <preference name="AutoHideSplashScreen" value="true" />
+    <preference name="FadeSplashScreen" value="true" />
+    <preference name="FadeSplashScreenDuration" value="500" />
+
     <platform name="android">
+        <preference name="android-minSdkVersion" value="24" />
+
+        <!-- Custom splash screen resources -->
+        <resource-file src="resources/android/drawable/ic_cdv_splashscreen.xml" target="app/src/main/res/drawable/ic_cdv_splashscreen.xml" />
+        <resource-file src="resources/android/drawable/splash_icon.png" target="app/src/main/res/drawable/splash_icon.png" />
+        <resource-file src="resources/android/values/colors.xml" target="app/src/main/res/values/colors.xml" />
+
         <edit-config file="AndroidManifest.xml" mode="merge" target="/manifest/application">
             <application android:usesCleartextTraffic="true" />
         </edit-config>

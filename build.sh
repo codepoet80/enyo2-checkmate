@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# Load SDKMAN for Java 17
+if [ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]; then
+    source "$HOME/.sdkman/bin/sdkman-init.sh"
+    sdk use java 17.0.13-tem > /dev/null 2>&1 || echo "Warning: Could not load Java 17"
+fi
+
+# Load nvm and use LTS Node version
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+nvm use --lts > /dev/null 2>&1 || echo "Warning: nvm not available, using system Node"
+
 mydir=$(cd `dirname $0` && pwd)
 mkdir -p $mydir/bin/
 
@@ -81,15 +92,20 @@ if [ $android -eq 1 ]; then
     cd $mydir/cordova-wrapper
     mkdir -p $mydir/cordova-wrapper/www
     rm -rf $mydir/cordova-wrapper/www/*
-    cordova platform add android
 
-    # Apply JCenter migration fixes
-    echo "Applying JCenter migration fixes..."
-    if [ -f "$mydir/cordova-wrapper/hooks/after_platform_add/fix_jcenter.sh" ]; then
-        bash "$mydir/cordova-wrapper/hooks/after_platform_add/fix_jcenter.sh"
-    else
-        echo "Warning: JCenter fix script not found. Build may fail."
+    # Copy icons first so they're available during platform add
+    echo "Copying icons to Cordova www..."
+    cp $mydir/enyo-app/icon.png $mydir/cordova-wrapper/www/
+    cp $mydir/enyo-app/icon-256.png $mydir/cordova-wrapper/www/
+
+    # Remove old Android platform if it exists
+    if [ -d "platforms/android" ]; then
+        echo "Removing old Android platform..."
+        npx cordova platform remove android
     fi
+
+    echo "Adding Android platform..."
+    npx cordova platform add android
 
     echo "Copying to Cordova..."
     cp -R $mydir/enyo-app/deploy/* $mydir/cordova-wrapper/www
@@ -97,7 +113,7 @@ if [ $android -eq 1 ]; then
     echo "Building Cordova..."
     #echo "using args $argcordova"
     #read -p "Press key to continue.. " -n1 -s
-    cordova build android $argcordova
+    npx cordova build android $argcordova
 
     # Extract app name from package.json and rename APK
     appname=$(grep '"name"' $mydir/cordova-wrapper/package.json | head -1 | sed 's/.*"name": *"\([^"]*\)".*/\1/')

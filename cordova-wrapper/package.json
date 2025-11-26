@@ -2,7 +2,7 @@
   "name": "com.webosarchive.checkmatehd",
   "displayName": "CheckMate HD",
   "version": "10",
-  "description": "A sample Apache Cordova application that responds to the deviceready event.",
+  "description": "Check Mate is the simplest of To Do lists. No data is shared with anyone else, there's no special permissions needed, no ads and no tracking!",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -13,7 +13,8 @@
   "author": "Apache Cordova Team",
   "license": "Apache-2.0",
   "devDependencies": {
-    "cordova-android": "^9.1.0"
+    "cordova": "^13.0.0",
+    "cordova-android": "^14.0.1"
   },
   "cordova": {
     "platforms": [
