@@ -16,8 +16,6 @@
     "cordova-android": "^9.1.0"
   },
   "cordova": {
-    "platforms": [
-      "android"
-    ]
+    "platforms": []
   }
 }

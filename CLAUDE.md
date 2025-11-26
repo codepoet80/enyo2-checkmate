@@ -174,7 +174,10 @@ If you encounter build errors, run the standalone fix script:
 
 1. **Repository Configuration**: Adds `mavenCentral()` to all Gradle repository configurations
 2. **Version Compare Library**: Updates from `com.g00fy2:versioncompare:1.3.4` (JCenter-only) to `io.github.g00fy2:versioncompare:1.5.0` (Maven Central)
-3. **Bintray Plugin**: Disables the publishing plugin (not needed for building)
+3. **Bintray Plugin**: Disables the publishing plugin (not needed for building):
+   - Comments out the `classpath` declaration for the bintray plugin
+   - Comments out the `apply plugin: 'com.jfrog.bintray'` statement
+   - Wraps the entire `bintray { }` configuration block in `/* */` comments
 4. **Build Tools**: Sets compatible Android Build Tools version (30.0.3)
 
 **First-Time Setup After Git Clone:**

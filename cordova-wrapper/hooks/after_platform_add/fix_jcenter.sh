@@ -72,6 +72,49 @@ do
         # Comment out bintray plugin
         sed -i.bak "s/apply plugin: 'com\.jfrog\.bintray'/\/\/ Disabled: JCenter shutdown - apply plugin: 'com.jfrog.bintray'/" "$file"
 
+        # Comment out the bintray configuration block
+        # Only apply if not already commented (check for uncommented "bintray {" at start of line)
+        if grep -q "^bintray {" "$file"; then
+            # Use perl for in-place editing with proper multiline support
+            perl -i.bak -0pe 's/^bintray \{/\/\/ Disabled: JCenter is shut down, bintray configuration only needed for publishing\n\/\*\nbintray {/m' "$file"
+
+            # Now find and close the comment block after the matching closing brace
+            # Use awk to handle brace matching
+            awk '
+                BEGIN { in_bintray_comment=0; depth=0 }
+                /^\/\/ Disabled: JCenter is shut down, bintray configuration only needed for publishing/ {
+                    print
+                    in_bintray_comment=1
+                    next
+                }
+                /^\/\*$/ && in_bintray_comment==1 {
+                    print
+                    in_bintray_comment=2
+                    next
+                }
+                /^bintray \{/ && in_bintray_comment==2 {
+                    print
+                    depth=1
+                    next
+                }
+                in_bintray_comment==2 && depth > 0 {
+                    if (/\{/) depth++
+                    if (/\}/) {
+                        depth--
+                        print
+                        if (depth == 0) {
+                            print "*/"
+                            in_bintray_comment=0
+                        }
+                    } else {
+                        print
+                    }
+                    next
+                }
+                { print }
+            ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+        fi
+
         echo "  ✓ Updated: $file"
     fi
 done
