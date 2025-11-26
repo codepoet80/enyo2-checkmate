@@ -10,26 +10,23 @@ EnyoJS (Enyo2) was a Javascript toolkit that evolved out of Palm/HPs webOS mobil
 
 ## Releases
 
-You can find the app for webOS in the [App Museum](http://appcatalog.webosarchive.org), and I've submitted it to Google Play (at a price of $0.99 for the headache that submission process caused). You can also use this app (or the retro-friendly version) in virtually any web browser at [http://checkmate.wosa.link](http://checkmate.wosa.link).
+You can find the app for webOS in the [App Museum](http://appcatalog.webosarchive.org), and download Android builds from GitHub. You can also use this app (or the retro-friendly version) in virtually any web browser at [http://checkmate.wosa.link](http://checkmate.wosa.link).
 
 If none of those options work for you, find binaries and a web-hostable zip periodically updated in the Release section of this repo, or pull the repo and build from source.
 
 ## Dependencies
 
-Building depends on Node (v14 LTS tested), Cordova, and the toolchain for any mobile environments you want to target (Android SDK, or the legacy [webOS SDK](http://sdk.webosarchive.org))
+Read [environment.md](environment.md) for details about the modernized build system.
+
+You will need to get the webOS SDK working. Details are at [sdk.webosarchive.org](http://sdk.webosarchive.org).
 
 ## Building
 
-The bootplate provides a folder structure and app template to allow you to develop
-Enyo2 apps for a variety of platforms including legacy webOS, LuneOS, Android and the web.
-
-This project exists to allow apps to run on old *and* new devices, but can't prevent you
-from using modern web features that won't work on older devices -- QA is up to you!
+This app is based on [Enyo2](http://sdk.webosarchive.org), a legacy Javascript framework originally for webOS, and the [enyo2-bootplate](https://github.com/webosarchive/enyo2-bootplate) from webOS Archive.
 
 You create your app by modifying and updating the contents of the `enyo-app` folder.
 
-The build script will help you build the app for different platforms. You specify
-which platforms to build for with command line arguments to the build script.
+The build script will help you build the app for different platforms. You specify which platforms to build for with command line arguments to the build script.
 
 Ensure the script is executable: `chmod +x build.sh`
 
@@ -38,10 +35,6 @@ Call the script, passing a list of the platforms you want to build, with a space
 `./build.sh webos www android`
 
 If you prefer to be in control, check out the other docs in this folder for platform-specific details.
-
-I have this working with Node 14.21.3 + Cordova 10.0.0 + cordova-android 9.1.0
-
-You may need to specify the cordova platform version with: `cordova platform add android@9.1.0`
 
 ## Why
 

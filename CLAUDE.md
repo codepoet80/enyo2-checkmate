@@ -21,11 +21,71 @@ Additional build flags:
 - `--prod`: Production build
 - `-v`: Verbose output
 
-The build script requires:
-- Node.js (v14 LTS tested)
-- Cordova (for mobile builds)
-- webOS SDK (for legacy webOS builds)
-- Android SDK (for Android builds)
+## Build Requirements (Updated 2025)
+
+The project has been upgraded to modern tooling while maintaining backward compatibility with legacy webOS targets:
+
+### Required Software:
+- **Node.js**: v24.11.1 LTS (managed via nvm)
+- **Java**:
+  - **Oracle JDK 8** (1.8.x) for webOS/LuneOS builds
+    - Required at `/opt/jdk/jdk1.8.0_*` (or similar system location)
+    - Must output "java version" format (not "openjdk version")
+    - Reason: palm-package tool requires Oracle JDK format
+  - **JDK 17** for Android builds (managed via SDKMAN)
+  - *Note: The build script automatically switches between versions*
+- **Cordova**: 13.0.0+ (now installed locally via npm)
+- **cordova-android**: 14.0.1 (supports Android 12+ / API level 35)
+- **Android SDK Build Tools**: 35.0.0
+- **webOS SDK**: For legacy webOS/LuneOS builds only
+
+### First-Time Setup:
+
+1. **Install nvm (Node Version Manager):**
+   ```bash
+   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+   source ~/.bashrc  # or restart terminal
+   nvm install --lts
+   ```
+
+2. **Install SDKMAN (Java Version Manager) and Java 17:**
+   ```bash
+   curl -s "https://get.sdkman.io" | bash
+   source ~/.sdkman/bin/sdkman-init.sh  # or restart terminal
+
+   # Install Java 17 for Android builds
+   sdk install java 17.0.13-tem
+   ```
+
+3. **Install Oracle JDK 8 for webOS builds:**
+
+   The webOS `palm-package` tool requires Oracle JDK 8 (not OpenJDK) because it checks for the specific "java version" output format.
+
+   - Download Oracle JDK 8 from Oracle's website (requires account)
+   - Or check if already installed at `/opt/jdk/jdk1.8.0_*`
+   - The build script will automatically use it if found
+
+   *Note: The build script automatically switches between Oracle JDK 8 (webOS) and JDK 17 (Android) depending on the target platform.*
+
+4. **Install Android SDK Build Tools 35.0.0:**
+   ```bash
+   # Using Android SDK Manager (adjust path as needed)
+   $ANDROID_HOME/tools/bin/sdkmanager "build-tools;35.0.0"
+   ```
+
+4. **Install Cordova dependencies:**
+   ```bash
+   cd cordova-wrapper
+   npm install
+   cd ..
+   ```
+
+5. **Build the project:**
+   ```bash
+   ./build.sh android  # or www, webos, etc.
+   ```
+
+The build script automatically loads the correct Node.js and Java versions via nvm and SDKMAN.
 
 ## Architecture
 
@@ -70,10 +130,6 @@ The application follows EnyoJS 2 framework conventions with a component-based ar
 - Uses Cordova wrapper in `cordova-wrapper/`
 - Build output: `.apk` and `.aab` files in `bin/`
 - Requires Android SDK and platform tools
-- **JCenter Migration**: Cordova-Android 9.x uses dependencies from JCenter (shut down in 2021)
-  - Automatic fix: Hook script runs after `cordova platform add android`
-  - Manual fix: Run `./fix-android-build.sh` if build fails
-  - See "Android Build Troubleshooting" section below
 
 ## EnyoJS Framework Conventions
 
@@ -144,52 +200,27 @@ The application automatically handles responsive design, switching between narro
 
 ## Android Build Troubleshooting
 
-### JCenter Repository Shutdown Issue
+### Cordova 14 Upgrade Notes (2025)
 
-JCenter (bintray.com) was shut down in 2021, but Cordova-Android 9.x still references it. This causes build failures with errors like:
+The project has been upgraded from Cordova 10 / cordova-android 9.x to **Cordova 13 / cordova-android 14.x**. This brings:
 
-```
-Could not find com.g00fy2:versioncompare:1.3.4
-Could not find com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3
-```
+- **Android 12+ Support**: Target SDK 35 (Android 14), minimum SDK 24 (Android 7)
+- **Modern Build Tools**: Gradle 8.13, Android Build Tools 35.0.0
+- **Java 17 Requirement**: Older Java versions (8, 11) are no longer supported
 
-**Automatic Fix (Recommended):**
+### Common Build Issues
 
-The build script automatically applies JCenter fixes when building for Android:
+**Issue: "Dependency requires at least JVM runtime version 11"**
 
+Solution: Install Java 17 via SDKMAN (see First-Time Setup above). The build script automatically loads Java 17 if SDKMAN is configured.
+
+**Issue: "No usable Android build tools found"**
+
+Solution: Install Android SDK Build Tools 35.0.0:
 ```bash
-./build.sh android
-# JCenter fixes are applied automatically after adding the platform
+$ANDROID_HOME/tools/bin/sdkmanager "build-tools;35.0.0"
 ```
 
-**Manual Fix:**
+**Issue: Old Node.js version causes syntax errors**
 
-If you encounter build errors, run the standalone fix script:
-
-```bash
-./fix-android-build.sh
-```
-
-**What Gets Fixed:**
-
-1. **Repository Configuration**: Adds `mavenCentral()` to all Gradle repository configurations
-2. **Version Compare Library**: Updates from `com.g00fy2:versioncompare:1.3.4` (JCenter-only) to `io.github.g00fy2:versioncompare:1.5.0` (Maven Central)
-3. **Bintray Plugin**: Disables the publishing plugin (not needed for building):
-   - Comments out the `classpath` declaration for the bintray plugin
-   - Comments out the `apply plugin: 'com.jfrog.bintray'` statement
-   - Wraps the entire `bintray { }` configuration block in `/* */` comments
-4. **Build Tools**: Sets compatible Android Build Tools version (30.0.3)
-
-**First-Time Setup After Git Clone:**
-
-```bash
-# Install dependencies
-cd cordova-wrapper
-npm install
-cd ..
-
-# Build (fixes are applied automatically)
-./build.sh android
-```
-
-**Note:** These are build-time dependency changes only and do not affect runtime compatibility with legacy devices.
+Solution: Use Node.js 24+ via nvm. The project includes `.nvmrc` files to automatically select the correct version. Run `nvm use` in the project directory.

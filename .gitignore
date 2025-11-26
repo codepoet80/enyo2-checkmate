@@ -5,3 +5,5 @@
 /cordova-wrapper/node_modules
 /cordova-wrapper/www
 /bin
+/enyo-app/build
+/enyo-app/deploy
