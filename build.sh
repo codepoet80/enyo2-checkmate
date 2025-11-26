@@ -82,6 +82,15 @@ if [ $android -eq 1 ]; then
     mkdir -p $mydir/cordova-wrapper/www
     rm -rf $mydir/cordova-wrapper/www/*
     cordova platform add android
+
+    # Apply JCenter migration fixes
+    echo "Applying JCenter migration fixes..."
+    if [ -f "$mydir/cordova-wrapper/hooks/after_platform_add/fix_jcenter.sh" ]; then
+        bash "$mydir/cordova-wrapper/hooks/after_platform_add/fix_jcenter.sh"
+    else
+        echo "Warning: JCenter fix script not found. Build may fail."
+    fi
+
     echo "Copying to Cordova..."
     cp -R $mydir/enyo-app/deploy/* $mydir/cordova-wrapper/www
     cd $mydir/cordova-wrapper

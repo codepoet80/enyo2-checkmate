@@ -155,12 +155,11 @@ Could not find com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3
 
 **Automatic Fix (Recommended):**
 
-The project includes a Cordova hook that automatically applies fixes after adding the Android platform:
+The build script automatically applies JCenter fixes when building for Android:
 
 ```bash
-cd cordova-wrapper
-cordova platform add android
-# Hook automatically runs and patches files
+./build.sh android
+# JCenter fixes are applied automatically after adding the platform
 ```
 
 **Manual Fix:**
@@ -184,15 +183,9 @@ If you encounter build errors, run the standalone fix script:
 # Install dependencies
 cd cordova-wrapper
 npm install
-
-# Add Android platform (hook runs automatically)
-cordova platform add android
-
-# Or manually run fix if needed
 cd ..
-./fix-android-build.sh
 
-# Build
+# Build (fixes are applied automatically)
 ./build.sh android
 ```
 
