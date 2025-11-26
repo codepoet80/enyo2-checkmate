@@ -70,6 +70,10 @@ The application follows EnyoJS 2 framework conventions with a component-based ar
 - Uses Cordova wrapper in `cordova-wrapper/`
 - Build output: `.apk` and `.aab` files in `bin/`
 - Requires Android SDK and platform tools
+- **JCenter Migration**: Cordova-Android 9.x uses dependencies from JCenter (shut down in 2021)
+  - Automatic fix: Hook script runs after `cordova platform add android`
+  - Manual fix: Run `./fix-android-build.sh` if build fails
+  - See "Android Build Troubleshooting" section below
 
 ## EnyoJS Framework Conventions
 
@@ -137,3 +141,59 @@ enyo.kind({
 6. **Always test on target devices** - modern JS features will break on legacy platforms
 
 The application automatically handles responsive design, switching between narrow (mobile) and wide (desktop) layouts based on screen width (600px breakpoint).
+
+## Android Build Troubleshooting
+
+### JCenter Repository Shutdown Issue
+
+JCenter (bintray.com) was shut down in 2021, but Cordova-Android 9.x still references it. This causes build failures with errors like:
+
+```
+Could not find com.g00fy2:versioncompare:1.3.4
+Could not find com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3
+```
+
+**Automatic Fix (Recommended):**
+
+The project includes a Cordova hook that automatically applies fixes after adding the Android platform:
+
+```bash
+cd cordova-wrapper
+cordova platform add android
+# Hook automatically runs and patches files
+```
+
+**Manual Fix:**
+
+If you encounter build errors, run the standalone fix script:
+
+```bash
+./fix-android-build.sh
+```
+
+**What Gets Fixed:**
+
+1. **Repository Configuration**: Adds `mavenCentral()` to all Gradle repository configurations
+2. **Version Compare Library**: Updates from `com.g00fy2:versioncompare:1.3.4` (JCenter-only) to `io.github.g00fy2:versioncompare:1.5.0` (Maven Central)
+3. **Bintray Plugin**: Disables the publishing plugin (not needed for building)
+4. **Build Tools**: Sets compatible Android Build Tools version (30.0.3)
+
+**First-Time Setup After Git Clone:**
+
+```bash
+# Install dependencies
+cd cordova-wrapper
+npm install
+
+# Add Android platform (hook runs automatically)
+cordova platform add android
+
+# Or manually run fix if needed
+cd ..
+./fix-android-build.sh
+
+# Build
+./build.sh android
+```
+
+**Note:** These are build-time dependency changes only and do not affect runtime compatibility with legacy devices.

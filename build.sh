@@ -89,8 +89,12 @@ if [ $android -eq 1 ]; then
     #echo "using args $argcordova"
     #read -p "Press key to continue.. " -n1 -s
     cordova build android $argcordova
-    cp $mydir/cordova-wrapper/platforms/android/app/build/outputs/apk/debug/*.apk $mydir/bin/ 2>/dev/null
-    cp $mydir/cordova-wrapper/platforms/android/app/build/outputs/bundle/release/*.aab $mydir/bin/ 2>/dev/null
+
+    # Extract app name from package.json and rename APK
+    appname=$(grep '"name"' $mydir/cordova-wrapper/package.json | head -1 | sed 's/.*"name": *"\([^"]*\)".*/\1/')
+    cp $mydir/cordova-wrapper/platforms/android/app/build/outputs/apk/debug/*.apk $mydir/bin/${appname}-debug.apk 2>/dev/null
+    cp $mydir/cordova-wrapper/platforms/android/app/build/outputs/bundle/release/*.aab $mydir/bin/${appname}-debug.aab 2>/dev/null
+
 fi
 
 echo "Cleaning up..."
