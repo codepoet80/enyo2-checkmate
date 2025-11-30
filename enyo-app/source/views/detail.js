@@ -38,7 +38,7 @@ enyo.kind({
 	},
 	render: function() {
 		this.$.taskTitle.setValue(this.getTaskTitle());
-		this.$.taskNotes.setValue(this.getTaskNotes());
+		this.$.taskNotes.setValue(this.decodeSpecials(this.getTaskNotes()));
 		
 		this.$.taskTitle.setDisabled(!this.inEdit);
 		this.$.taskNotes.setDisabled(!this.inEdit);
@@ -92,5 +92,13 @@ enyo.kind({
 		}), 500);
 
 		return true;
+	},
+	decodeSpecials: function(encodedStr) {
+		var decodedStr = encodedStr.replace(/&amp;/g, '&')
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&quot;/g, '"')
+		.replace(/&#39;/g, "'");
+		return decodedStr;
 	}
 });
