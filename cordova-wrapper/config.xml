@@ -14,12 +14,12 @@
     <access origin="*" />
     <preference name="Scheme" value="http" />
 
-    <!-- Splash screen configuration -->
+    <!-- Splash screen configuration
     <preference name="SplashScreenDelay" value="2000" />
-    <preference name="AutoHideSplashScreen" value="true" />
-    <preference name="FadeSplashScreen" value="true" />
+    <preference name="AutoHideSplashScreen" value="false" />
+    <preference name="FadeSplashScreen" value="false" />
     <preference name="FadeSplashScreenDuration" value="500" />
-
+ -->
     <platform name="android">
         <preference name="android-minSdkVersion" value="24" />
 

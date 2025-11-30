@@ -142,6 +142,7 @@ fi
 www=0
 webOS=0
 android=0
+eink=0
 verbose=
 argcordova=
 for arg in "$@"; do
@@ -153,6 +154,10 @@ for arg in "$@"; do
     fi
     if [ "$arg" = "android" ]; then
         android=1
+    fi
+    if [ "$arg" = "eink" ]; then
+        android=1
+        eink=1
     fi
     if [ "$arg" = "www" ]; then
         www=1
@@ -216,6 +221,17 @@ if [ $webOS -eq 1 ]; then
     mv -f $mydir/enyo-app/deploy/bin/*.ipk $mydir/bin
 else
     echo "Building for www..."
+    # Swap in styling for eink
+    if [ $eink -eq 1 ]; then
+        echo " - Using eink style"
+        cp -rf $mydir/enyo-app/source/app.css $mydir/eink/app.css
+        cp -rf $mydir/eink/eink-app.css $mydir/enyo-app/source/app.css
+        cp -rf $mydir/cordova-wrapper/resources/android/values/colors.xml $mydir/eink/colors.xml
+        cp -rf $mydir/eink/eink-colors.xml $mydir/cordova-wrapper/resources/android/values/colors.xml
+        cp -rf $mydir/cordova-wrapper/resources/android/drawable/splash_icon.png $mydir/eink/splash_icon.png
+        cp -rf $mydir/eink/eink-splash_icon.png $mydir/cordova-wrapper/resources/android/drawable/splash_icon.png
+        #read -p "Press key to continue... " -n1 -s
+    fi
     $mydir/enyo-app/tools/deploy.sh $verbose
 fi
 
@@ -246,17 +262,27 @@ if [ $android -eq 1 ]; then
 
     echo "Copying to Cordova..."
     cp -R $mydir/enyo-app/deploy/* $mydir/cordova-wrapper/www
+
     cd $mydir/cordova-wrapper
     echo "Building Cordova..."
-    #echo "using args $argcordova"
-    #read -p "Press key to continue.. " -n1 -s
     npx cordova build android $argcordova
 
-    # Extract app name from package.json and rename APK
     appname=$(grep '"name"' $mydir/cordova-wrapper/package.json | head -1 | sed 's/.*"name": *"\([^"]*\)".*/\1/')
+
+    # Swap eink styling back out
+    if [ $eink -eq 1 ]; then
+        cp -rf $mydir/eink/app.css $mydir/enyo-app/source/app.css
+        cp -rf $mydir/eink/colors.xml $mydir/cordova-wrapper/resources/android/values/colors.xml 
+        cp -rf $mydir/eink/splash_icon.png $mydir/cordova-wrapper/resources/android/drawable/splash_icon.png
+        rm $mydir/eink/app.css
+        rm $mydir/eink/colors.xml
+        rm $mydir/eink/splash_icon.png
+        appname="$appname-eink"
+    fi
+
+    # Extract app name from package.json and rename APK
     cp $mydir/cordova-wrapper/platforms/android/app/build/outputs/apk/debug/*.apk $mydir/bin/${appname}-debug.apk 2>/dev/null
     cp $mydir/cordova-wrapper/platforms/android/app/build/outputs/bundle/release/*.aab $mydir/bin/${appname}-debug.aab 2>/dev/null
-
 fi
 
 echo "Cleaning up..."

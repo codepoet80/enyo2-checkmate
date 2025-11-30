@@ -74,7 +74,7 @@
     background-color: white; 
     line-height: 40px;
     font-size: medium; 
-    border: 1px solid rgb(213, 213, 213);
+    border: 1px solid rgb(0, 0, 0);
     margin: 1px 6px 1px 4px
 }
 .itemTitle { margin-left: 8px; margin-top:4px;}

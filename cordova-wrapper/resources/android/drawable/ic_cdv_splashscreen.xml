@@ -17,12 +17,6 @@
  under the License.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Background color - dark gray -->
-    <item>
-        <shape android:shape="rectangle">
-            <solid android:color="#424242" />
-        </shape>
-    </item>
 
     <!-- Centered splash icon -->
     <item>
