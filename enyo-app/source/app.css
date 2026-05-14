@@ -180,3 +180,37 @@
     -moz-border-radius: 10px;
     -o-border-radius: 10px;
 }
+/* contenteditable spell-check inputs (webOS / WebKit spell check support) */
+.spell-check-input {
+    padding: 6px 8px 10px 8px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    outline: none;
+    cursor: text;
+    background-color: #eaeaea;
+    color: #333333;
+    /* CRITICAL: override body.enyo-unselectable so text input works */
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-user-modify: read-write;
+}
+.spell-check-input:focus {
+    background-color: #ffffff;
+    border-color: rgba(0, 0, 0, 0.3);
+    -webkit-box-shadow: inset 0px 1px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0px 1px 4px rgba(0, 0, 0, 0.3);
+}
+.spell-check-input.spell-check-disabled {
+    opacity: 0.6;
+    cursor: default;
+    -webkit-user-modify: read-only;
+}
+.spell-check-input:empty::before {
+    color: #888888;
+    pointer-events: none;
+}
