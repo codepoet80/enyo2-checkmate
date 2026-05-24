@@ -6,7 +6,7 @@
 //App Details
 $title = "Check Mate";
 $subtitle = " | Your To Do List -- anywhere!";
-$description = "Check Mate is a cross platform to-do list app created by provided by webOS Archive for retro and modern devices.";
+$description = "Check Mate is a cross platform to-do list app provided by webOS Archive for retro and modern devices.";
 $github = "https://github.com/codepoet80/checkmate-service";
 $pwaLink = "https://store.app/checkmate-wosa-link";
 $githubLink = "https://github.com/codepoet80/enyo2-checkmate/releases";
