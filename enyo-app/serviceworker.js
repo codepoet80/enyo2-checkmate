@@ -8,7 +8,10 @@ const DYNAMIC_CACHE = 'checkmate-dynamic-v1.2';
 const STATIC_ASSETS = [
     './',
     './index.html',
-    './debug.html',
+    // debug.html is deliberately NOT here: it loads the unminified source tree
+    // (enyo/enyo.js, source/package.js), so it is a development entry point and
+    // is never deployed. Listing it here 404'd and, because cache.addAll() is
+    // all-or-nothing, took the entire install down with it.
     './manifest.json',
     './favicon.ico',
     './icon.png',
@@ -63,7 +66,16 @@ self.addEventListener('install', function(event) {
             // Cache static assets
             caches.open(CACHE_NAME).then(function(cache) {
                 console.log('Service Worker: Caching static assets');
-                return cache.addAll(STATIC_ASSETS.concat(CORE_IMAGES, ESSENTIAL_ICONS, AUDIO_FILES));
+                // Cache each asset on its own rather than with addAll(), which
+                // rejects the whole batch if any single request fails. One stale
+                // path in the lists above used to leave the app with NO offline
+                // cache at all, silently.
+                var assets = STATIC_ASSETS.concat(CORE_IMAGES, ESSENTIAL_ICONS, AUDIO_FILES);
+                return Promise.all(assets.map(function(url) {
+                    return cache.add(url).catch(function(error) {
+                        console.warn('Service Worker: could not cache ' + url, error);
+                    });
+                }));
             }),
             // Skip waiting to activate immediately
             self.skipWaiting()
