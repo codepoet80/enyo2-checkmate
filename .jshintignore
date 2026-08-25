@@ -8,3 +8,4 @@ node_modules
 Gruntfile.js
 tasks
 tools
+test
