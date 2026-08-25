@@ -221,6 +221,11 @@ self.addEventListener('message', function(event) {
             caches.open(DYNAMIC_CACHE).then(cache => cache.keys())
         ]).then(function(results) {
             event.ports[0].postMessage({
+                // The build-stamped cache name of the worker actually serving
+                // this page. That can lag the page's own bundle -- a new worker
+                // waits until every tab is gone before taking over -- and
+                // telling the two apart is the whole point of about:version.
+                cacheName: CACHE_NAME,
                 staticCacheSize: results[0].length,
                 dynamicCacheSize: results[1].length,
                 totalCached: results[0].length + results[1].length

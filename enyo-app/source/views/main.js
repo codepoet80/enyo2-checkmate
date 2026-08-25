@@ -84,8 +84,13 @@ enyo.kind({
 			this.serverTasks = [];
 			this.viewTasks = [];
 			this.holdTimer = null;
+			this.serviceWorkerVersion = null;
 		};
 	}),
+	//Naming a task exactly this fills its notes with the running build instead of
+	//	whatever was typed, so "is the PWA actually updated?" has an answer you can
+	//	read on the device -- and, because it syncs, from any other client too.
+	buildInfoTitle: "about:version",
 	rendered: enyo.inherit(function(sup) {
 		return function() {
 			sup.apply(this, arguments);
@@ -120,6 +125,7 @@ enyo.kind({
 				window.setTimeout(enyo.bind(this, "doSigninOut"), 500);
 			}
 			this.$.contentPanels.setIndex(1);
+			this.readServiceWorkerVersion();
 
 			if (typeof device !== 'undefined' && device.platform) {
 				this.doUpdateCheck();
@@ -364,6 +370,44 @@ enyo.kind({
 		};
 	},
 
+	/* Build identity */
+	//Asked once at startup rather than when the note is written, so the answer is
+	//	already in hand and building the note stays synchronous. Every step here is
+	//	guarded: none of this exists on the webOS browser, and the app has to keep
+	//	working there.
+	readServiceWorkerVersion: function() {
+		this.serviceWorkerVersion = null;
+		if (typeof navigator === "undefined" || !navigator.serviceWorker) {
+			this.serviceWorkerVersion = "none (not supported here)";
+			return;
+		}
+		if (!navigator.serviceWorker.controller) {
+			//Normal on the very first load: the worker installs but doesn't take
+			//	over until the next navigation.
+			this.serviceWorkerVersion = "registered, not yet controlling this page";
+			return;
+		}
+		if (typeof MessageChannel === "undefined") {
+			this.serviceWorkerVersion = "controlling (version unavailable)";
+			return;
+		}
+		try {
+			var channel = new MessageChannel();
+			channel.port1.onmessage = enyo.bind(this, function(inEvent) {
+				if (inEvent && inEvent.data && inEvent.data.cacheName) {
+					this.serviceWorkerVersion = inEvent.data.cacheName;
+				}
+			});
+			this.serviceWorkerVersion = "controlling (awaiting reply)";
+			navigator.serviceWorker.controller.postMessage({type: "GET_CACHE_STATUS"}, [channel.port2]);
+		} catch (err) {
+			enyo.warn("Could not read the service worker version: " + err);
+			this.serviceWorkerVersion = "controlling (query failed)";
+		}
+	},
+	isBuildInfoTitle: function(title) {
+		return !!title && title === this.buildInfoTitle;
+	},
 	/* Updater */
 	doUpdateCheck: function() {
 		this.$.myUpdater.CheckForUpdate("Check Mate HD");
@@ -609,6 +653,12 @@ enyo.kind({
 
 		var title = this.$.taskDetails.taskTitle;
 		var notes = this.$.taskDetails.taskNotes;
+
+		//Applied on edit as well as create, so re-saving the task refreshes the
+		//	reading rather than leaving a stale one on screen.
+		if (this.isBuildInfoTitle(title)) {
+			notes = BuildInfo.describe(this.serviceWorkerVersion);
+		}
 		var wasEditing = !!this.selectedTask;
 		var existing = wasEditing ? this.findTaskByGuid(this.selectedTask.guid) : null;
 

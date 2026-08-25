@@ -185,7 +185,8 @@ stamp_service_worker() {
             ;;
     esac
 
-    # Only burn a build number once we know we have something to stamp.
+    # Only burn a build number once we know we have something to stamp, and use
+    # the same one for the bundle below so the two can be compared meaningfully.
     stampver="$appver-$(next_build_number)"
 
     # -i.bak is the form both BSD (macOS) and GNU sed accept. The deploy dir is
@@ -197,7 +198,21 @@ stamp_service_worker() {
         "$sw"
     rm -f "$sw.bak"
 
-    echo " - Service worker cache stamped: $stampver"
+    # Same stamp into the app bundle, so the running JS can report which build it
+    # is without a network round trip. BuildInfo.stamp in source/api/version.js
+    # holds a sentinel that the minifier preserves as a plain string literal.
+    bundle="$mydir/enyo-app/deploy/build/app.js"
+    if [ -f "$bundle" ]; then
+        if grep -q "__CHECKMATE_BUILD__" "$bundle"; then
+            sed -i.bak "s/__CHECKMATE_BUILD__/$stampver/g" "$bundle"
+            rm -f "$bundle.bak"
+        else
+            echo "WARNING: build stamp sentinel not found in app.js;"
+            echo "         the app will report itself as an unbuilt source build"
+        fi
+    fi
+
+    echo " - Build stamped: $stampver"
 }
 
 mydir=$(cd `dirname $0` && pwd)

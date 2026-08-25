@@ -111,15 +111,18 @@ global.enyo = {
     Control: {}, Checkbox: {}
 };
 global.Prefs = {getCookie: function (n, d) { return d; }, setCookie: function () {}};
+global.navigator = {userAgent: 'test-agent'};
+global.enyo.platform = {chrome: 140, touch: true};
 
 function load(rel) {
     var src = fs.readFileSync(path.join(ROOT, rel), 'utf8');
     // main.js declares `var updateRate` etc at top level; wrap so they stay local
-    new Function('enyo', 'window', 'localStorage', 'Prefs', 'setTimeout', 'clearTimeout', 'Date', src)(
+    new Function('enyo', 'window', 'localStorage', 'Prefs', 'setTimeout', 'clearTimeout', 'Date', 'navigator', src)(
         global.enyo, global.window, global.localStorage, global.Prefs,
-        global.setTimeout, global.clearTimeout, global.Date);
+        global.setTimeout, global.clearTimeout, global.Date, global.navigator);
 }
 load('enyo-app/source/api/checkmate.js');
+load('enyo-app/source/api/version.js');
 load('enyo-app/source/views/main.js');
 
 /* ---------- instantiate ---------- */
@@ -511,6 +514,82 @@ section('Regressions caught in review');
     v.updateTaskFromDetails();
     ok('no resurrection as a new task', api.getPendingOps().length === 0, api.getPendingOps());
     ok('  and the user is told', shown !== null && shown.indexOf('no longer exists') !== -1, shown);
+})();
+
+
+section('about:version build report');
+(function () {
+    var realStamp = BuildInfo.stamp;
+
+    // unstamped bundle should say so rather than lying
+    BuildInfo.stamp = '__CHECKMATE_BUILD__';
+    ok('unstamped source reports itself', BuildInfo.getVersion().indexOf('unbuilt') !== -1,
+       BuildInfo.getVersion());
+    ok('  isStamped() is false', BuildInfo.isStamped() === false);
+
+    BuildInfo.stamp = '2.3.0-0007';
+    ok('a stamped bundle reports its version', BuildInfo.getVersion() === '2.3.0-0007');
+    ok('  isStamped() is true', BuildInfo.isStamped() === true);
+
+    var note = BuildInfo.describe('checkmate-v2.3.0-0007');
+    ok('note carries the app build', note.indexOf('2.3.0-0007') !== -1, note);
+    ok('note carries the service worker version', note.indexOf('checkmate-v2.3.0-0007') !== -1, note);
+    ok('note names the display mode', note.indexOf('Display mode:') !== -1, note);
+    ok('note is within the 1000 char server limit', note.length <= 1000, note.length);
+
+    // the service rejects nothing here, but strip_tags() would silently eat
+    // anything angle-bracketed, so it must never reach the wire
+    ok('angle brackets are stripped', BuildInfo.sanitize('a <b> c').indexOf('<') === -1);
+    ok('over-long values are truncated', BuildInfo.sanitize(new Array(500).join('x')).length <= 220);
+
+    var unknown = BuildInfo.describe(null);
+    ok('missing service worker info says so', unknown.indexOf('not available') !== -1, unknown);
+
+    BuildInfo.stamp = realStamp;
+})();
+
+(function () {
+    resetWorld(); var api = makeApi(); var v = makeView(api);
+    var realStamp = BuildInfo.stamp;
+    BuildInfo.stamp = '2.3.0-0007';
+    v.serviceWorkerVersion = 'checkmate-v2.3.0-0007';
+    v.serverTasks = [task('A', 'First', 3)];
+    v.refreshProjection();
+    v.$.contentPanels = {setIndex: function () {}};
+
+    // creating it fills the notes regardless of what was typed
+    v.$.taskDetails = {taskTitle: 'about:version', taskNotes: 'ignore me', inEdit: false, taskGuid: ''};
+    v.updateTaskFromDetails();
+    var ops = api.getPendingOps();
+    ok('the magic title still creates a real task', ops.length === 1);
+    ok('  notes replaced with the build report', ops[0].task.notes.indexOf('2.3.0-0007') !== -1,
+       ops[0].task.notes);
+    ok('  title kept verbatim', ops[0].task.title === 'about:version');
+
+    // a normal task is untouched
+    resetWorld(); var api2 = makeApi(); var v2 = makeView(api2);
+    v2.serverTasks = []; v2.refreshProjection();
+    v2.$.contentPanels = {setIndex: function () {}};
+    v2.$.taskDetails = {taskTitle: 'about:versions', taskNotes: 'my notes', inEdit: false, taskGuid: ''};
+    v2.updateTaskFromDetails();
+    ok('a near-miss title is left alone', api2.getPendingOps()[0].task.notes === 'my notes',
+       api2.getPendingOps()[0].task.notes);
+
+    // re-saving an existing one refreshes the reading
+    resetWorld(); var api3 = makeApi(); var v3 = makeView(api3);
+    BuildInfo.stamp = '2.3.0-0009';
+    v3.serviceWorkerVersion = 'checkmate-v2.3.0-0009';
+    v3.serverTasks = [task('Z', 'about:version', 5)];
+    v3.serverTasks[0].notes = 'App build:      2.3.0-0001';
+    v3.refreshProjection();
+    v3.selectedTask = byGuid(v3.viewTasks, 'Z');
+    v3.$.contentPanels = {setIndex: function () {}};
+    v3.$.taskDetails = {taskTitle: 'about:version', taskNotes: 'stale', inEdit: false, taskGuid: 'Z'};
+    v3.updateTaskFromDetails();
+    ok('re-saving refreshes the reading', api3.getPendingOps()[0].task.notes.indexOf('2.3.0-0009') !== -1,
+       api3.getPendingOps()[0].task.notes);
+
+    BuildInfo.stamp = realStamp;
 })();
 
 console.log('\n========================================');
