@@ -1,23 +1,22 @@
-updateRate = 10000;
-isUpdating = false;
-cancelUpdate = false;
-updateInt = null;
+var updateRate = 10000;
+var updateInt = null;
+
 enyo.kind({
 	name: "checkmate.MainView",
 	kind: "FittableRows",
 	fit: true,
 	selectedTask: null,
-	cancelDeletes: [],
 	notation: "",
 	grandmaster: "",
-	data: [],
-	errorCount: 2,
+	//Starts at zero. This was 2 against a threshold of 3, so the first transient
+	//	error after launch dropped straight to offline instead of backing off.
+	errorCount: 0,
 	components:[
 		{kind: 'SoundPlayer', name:"mySoundPlayer", sounds: [
 			{kind: 'enyo.Audio', name:"soundSweep", src: 'assets/sweep.mp3'},
 			{kind: 'enyo.Audio', name:"soundCheck", src: 'assets/check.mp3'},
 			{kind: 'enyo.Audio', name:"soundUncheck", src: 'assets/uncheck.mp3'},
-			{kind: 'enyo.Audio', name:"soundDelete", src: 'assets/delete.mp3'},
+			{kind: 'enyo.Audio', name:"soundDelete", src: 'assets/delete.mp3'}
 		]},
 		{kind: 'wosa.updater', name:"myUpdater", onUpdateFound:"handleUpdateFound"},
 		{kind: 'checkmate.api', name:"myCheckmate"},
@@ -28,17 +27,17 @@ enyo.kind({
 					{tag: "img", classes:"toolbarIcon", attributes: {src: "icon.png"}},
 					{name: "toolTitle", content: "Check Mate HD" },
 					{kind: "onyx.Button", name: "buttonUpdate", classes:"buttonRightToolbar toolButton", ontap: "updateTap", components: [
-						{tag: "img", name:"imgSync", attributes: {src: "assets/sync.png"}},
-					]},
+						{tag: "img", name:"imgSync", attributes: {src: "assets/sync.png"}}
+					]}
 				]},
-				{kind: "List", name:"list", fit:true, classes: "taskList", multiSelect:false, onSetupItem: "setupListItem", 
+				{kind: "List", name:"list", fit:true, classes: "taskList", multiSelect:false, onSetupItem: "setupListItem",
 					reorderable: true, onSetupReorderComponents: "listReorderStart", onReorder: "listReorderDone", centerReorderContainer: false,
 					enableSwipe: true, onSetupSwipeItem: "listItemSwipeStart", onSwipeComplete: "listItemSwipeDone",
 					components: [
 						{name:"tasklistItem", classes: "tasklistItem", components: [
 							{name: "taskTitle", classes: "itemTitle", ontap: "listItemTap", allowHtml: true },
-							{name: "taskCheck", kind: "enyo.Checkbox", classes: "itemCheck", ontap: "listItemTap"},
-						]},
+							{name: "taskCheck", kind: "enyo.Checkbox", classes: "itemCheck", ontap: "listItemTap"}
+						]}
 					],
 					reorderComponents: [
 						{name: "reorderContent", classes: "enyo-fit reorderDragger itemMoving", components: [
@@ -54,44 +53,55 @@ enyo.kind({
 				{kind: "onyx.Toolbar", classes:"detailToolbarBottom", components: [
 					{kind: 'onyx.Grabber', ondragstart: 'grabberDragstart', ondrag: 'grabberDrag', ondragfinish: 'grabberDragFinish'},
 					{kind: "onyx.Button", classes:"toolButton", ontap: "newTaskTap", components: [
-						{tag: "img", attributes: {src: "assets/plus.png"}},
+						{tag: "img", attributes: {src: "assets/plus.png"}}
 					]},
 					{kind: "onyx.Button", classes:"buttonRight toolButton", ontap: "sweepTap", components: [
-						{tag: "img", attributes: {src: "assets/sweep.png"}},
+						{tag: "img", attributes: {src: "assets/sweep.png"}}
 					]},
-					{kind: "onyx.Button", name:"buttonLoginOut", content: "Log In", classes:"buttonRight toolButton", ontap: "doSigninOut"},
-				]},
-			]},
-		]},	
+					{kind: "onyx.Button", name:"buttonLoginOut", content: "Log In", classes:"buttonRight toolButton", ontap: "doSigninOut"}
+				]}
+			]}
+		]},
 		{kind: "enyo.Popup", name: "popupModal", modal: true, autoDismiss: false, centered: true, classes: "popup", components: [
 			{name:"popupMessage", content: "", allowHtml:true},
 			{classes:"spacer"},
 			{kind: "enyo.Button", name: "buttonCloseModal", content: "Close", ontap: "closeModal"}
-		]},
+		]}
 	],
 	statics: {
-        isScreenNarrow: function() {
-            return enyo.dom.getWindowWidth() <= 600;
-        }
-    },
+		isScreenNarrow: function() {
+			return enyo.dom.getWindowWidth() <= 600;
+		}
+	},
+	create: enyo.inherit(function(sup) {
+		return function() {
+			sup.apply(this, arguments);
+			//serverTasks is the last thing the server told us and is written ONLY
+			//	by a refresh. viewTasks is derived: server truth with the pending
+			//	op log replayed over it. Nothing mutates viewTasks in place, so a
+			//	refresh landing mid-edit cannot destroy an intent that hasn't been
+			//	sent yet.
+			this.serverTasks = [];
+			this.viewTasks = [];
+			this.holdTimer = null;
+		};
+	}),
 	rendered: enyo.inherit(function(sup) {
 		return function() {
 			sup.apply(this, arguments);
 			this.startSpinner();
-			notation = Prefs.getCookie("move", null);
-			grandmaster = Prefs.getCookie("grandmaster", null);
-			serverConfig = Prefs.getCookie("serverConfig", null);
+			var notation = Prefs.getCookie("move", null);
+			var grandmaster = Prefs.getCookie("grandmaster", null);
+			var serverConfig = Prefs.getCookie("serverConfig", null);
 			//Setup API events
 			//	Note: although Enyo provides for public events, it doesn't let you change the call-back signature.
 			//	So we can't bind these Enyo style. We'll do it this way instead...
-			this.$.myCheckmate.onRefreshSuccess = this.handleRefreshSuccess.bind(this);
-			this.$.myCheckmate.onRefreshError = this.handleRefreshError.bind(this);
-			this.$.myCheckmate.onPostSuccess = this.handlePostSuccess.bind(this);
-			this.$.myCheckmate.onPostError = this.handlePostError.bind(this);
+			this.$.myCheckmate.onRefreshSuccess = enyo.bind(this, "handleRefreshSuccess");
+			this.$.myCheckmate.onRefreshError = enyo.bind(this, "handleRefreshError");
+			this.$.myCheckmate.onPostSuccess = enyo.bind(this, "handlePostSuccess");
+			this.$.myCheckmate.onPostError = enyo.bind(this, "handlePostError");
+			this.$.myCheckmate.onQueueChanged = enyo.bind(this, "handleQueueChanged");
 			if (serverConfig && notation && grandmaster) {
-				enyo.log("Using server config and credentials from cookies");
-				enyo.log(JSON.stringify(serverConfig));
-				//Setup API connection
 				this.$.myCheckmate.setUrlBase(serverConfig.urlBase);
 				this.$.myCheckmate.setInsecure(serverConfig.insecure);
 				this.$.myCheckmate.setUseCustomServer(serverConfig.useCustomServer);
@@ -99,33 +109,266 @@ enyo.kind({
 
 				this.$.myCheckmate.notation = notation;
 				this.$.myCheckmate.grandmaster = grandmaster;
-	
-				//Ready to load the task list!
+
+				//Anything left in the queue from a previous run is already on
+				//	screen via the projection; show it before the network answers.
+				this.refreshProjection();
 				this.loadTaskList();
 				this.$.buttonLoginOut.setContent("Log Out");
 			}
 			else {
-				window.setTimeout(this.doSigninOut.bind(this), 500);
+				window.setTimeout(enyo.bind(this, "doSigninOut"), 500);
 			}
 			this.$.contentPanels.setIndex(1);
-			enyo.log("narrow state is: " + enyo.Panels.isScreenNarrow());
 
 			if (typeof device !== 'undefined' && device.platform) {
-				enyo.log("doing update check right away")
 				this.doUpdateCheck();
 			}
 			else {
-				enyo.log("doing update check when ready")
-				document.addEventListener('deviceready', this.doUpdateCheck.bind(this), false);
+				document.addEventListener('deviceready', enyo.bind(this, "doUpdateCheck"), false);
 			}
 		};
 	}),
+
+	/* ---- Projection ------------------------------------------------------ */
+
+	cloneTask: function(task) {
+		var copy = {};
+		for (var key in task) {
+			if (task.hasOwnProperty(key)) {
+				copy[key] = task[key];
+			}
+		}
+		return copy;
+	},
+	//Highest sortPosition first, matching the service. Decorated with the
+	//	original index so ties keep their order on engines whose Array#sort
+	//	isn't stable -- which includes the WebKit these devices ship.
+	sortTasks: function(tasks) {
+		var decorated = [];
+		for (var i = 0; i < tasks.length; i++) {
+			decorated.push({task: tasks[i], index: i});
+		}
+		decorated.sort(function(a, b) {
+			var pa = parseInt(a.task.sortPosition, 10) || 0;
+			var pb = parseInt(b.task.sortPosition, 10) || 0;
+			if (pa !== pb) {
+				return pb - pa;
+			}
+			return a.index - b.index;
+		});
+		var sorted = [];
+		for (var j = 0; j < decorated.length; j++) {
+			sorted.push(decorated[j].task);
+		}
+		return sorted;
+	},
+	//serverTasks + pendingOps -> what the user should see. Pure: same inputs
+	//	always give the same output, and it never touches either input.
+	projectTasks: function(serverTasks, ops) {
+		var map = {};
+		var order = [];
+		var i, j, guid;
+
+		for (i = 0; i < serverTasks.length; i++) {
+			guid = serverTasks[i].guid;
+			map[guid] = this.cloneTask(serverTasks[i]);
+			order.push(guid);
+		}
+
+		for (i = 0; i < ops.length; i++) {
+			var op = ops[i];
+			var held = this.$.myCheckmate.isOpHeld(op);
+			//A reorder carries a list; everything else carries one task. Treating
+			//	them uniformly keeps the replay loop simple.
+			var opTasks = (op.type === "reorder") ? op.task : [op.task];
+
+			for (j = 0; j < opTasks.length; j++) {
+				var t = opTasks[j];
+				guid = t.guid;
+				if (parseInt(t.sortPosition, 10) === -1) {
+					if (held) {
+						//Still inside the undo window: keep the row, flagged, so
+						//	it renders as "swipe again to restore".
+						if (map[guid]) {
+							map[guid]._deleting = true;
+						}
+					} else if (map[guid]) {
+						delete map[guid];
+					}
+				} else {
+					if (!map[guid]) {
+						map[guid] = this.cloneTask(t);
+						order.push(guid);
+					} else {
+						var overlay = this.cloneTask(t);
+						for (var key in overlay) {
+							if (overlay.hasOwnProperty(key)) {
+								map[guid][key] = overlay[key];
+							}
+						}
+					}
+					map[guid]._pending = true;
+					map[guid]._deleting = false;
+				}
+			}
+		}
+
+		var projected = [];
+		for (i = 0; i < order.length; i++) {
+			if (map[order[i]]) {
+				projected.push(map[order[i]]);
+				//Guard against a guid appearing twice in `order`.
+				map[order[i]] = null;
+			}
+		}
+		return this.sortTasks(projected);
+	},
+	refreshProjection: function() {
+		var next = this.projectTasks(this.serverTasks, this.$.myCheckmate.getPendingOps());
+		this.applyViewTasks(next);
+		this.scheduleHoldExpiry();
+	},
+	//Re-render as little as possible. Only a change in length or in the guid
+	//	order forces the full reset that makes the list jump.
+	applyViewTasks: function(next) {
+		var previous = this.viewTasks;
+		var structural = (previous.length !== next.length);
+		var i;
+
+		if (!structural) {
+			for (i = 0; i < next.length; i++) {
+				if (previous[i].guid !== next[i].guid) {
+					structural = true;
+					break;
+				}
+			}
+		}
+
+		this.viewTasks = next;
+
+		if (structural) {
+			this.$.list.setCount(next.length);
+			this.$.list.reset();
+		} else {
+			for (i = 0; i < next.length; i++) {
+				if (!this.tasksEqual(previous[i], next[i])) {
+					this.$.list.renderRow(i);
+				}
+			}
+		}
+		this.reselectTask();
+	},
+	tasksEqual: function(a, b) {
+		if (!a || !b) {
+			return false;
+		}
+		var aDone = a.completed ? true : false;
+		var bDone = b.completed ? true : false;
+		var aDeleting = a._deleting ? true : false;
+		var bDeleting = b._deleting ? true : false;
+		return a.guid === b.guid &&
+			a.title === b.title &&
+			a.notes === b.notes &&
+			aDone === bDone &&
+			String(a.sortPosition) === String(b.sortPosition) &&
+			aDeleting === bDeleting;
+	},
+	reselectTask: function() {
+		if (!this.selectedTask) {
+			return;
+		}
+		for (var i = 0; i < this.viewTasks.length; i++) {
+			if (this.viewTasks[i].guid === this.selectedTask.guid) {
+				this.$.list.select(i);
+				return;
+			}
+		}
+	},
+	findTaskByGuid: function(guid) {
+		for (var i = 0; i < this.viewTasks.length; i++) {
+			if (this.viewTasks[i].guid === guid) {
+				return this.viewTasks[i];
+			}
+		}
+		return null;
+	},
+	//The op log is authoritative for when a held delete goes out; this timer is
+	//	only an optimisation so the user doesn't wait for the next poll. If it
+	//	never fires, the poll still drains the queue.
+	scheduleHoldExpiry: function() {
+		if (this.holdTimer) {
+			window.clearTimeout(this.holdTimer);
+			this.holdTimer = null;
+		}
+		var ops = this.$.myCheckmate.getPendingOps();
+		var soonest = null;
+		var now = new Date().getTime();
+		for (var i = 0; i < ops.length; i++) {
+			if (!ops[i].inFlight && ops[i].sendAfter > now) {
+				if (soonest === null || ops[i].sendAfter < soonest) {
+					soonest = ops[i].sendAfter;
+				}
+			}
+		}
+		if (soonest !== null) {
+			this.holdTimer = window.setTimeout(enyo.bind(this, "holdExpired"), (soonest - now) + 50);
+		}
+	},
+	holdExpired: function() {
+		this.holdTimer = null;
+		this.refreshProjection();
+		this.$.myCheckmate.processQueue();
+	},
+	handleQueueChanged: function() {
+		this.refreshProjection();
+	},
+	//Client-side UUIDv4. Creating the id here makes a create idempotent: a retry
+	//	targets the same guid instead of asking the server for another new task,
+	//	and the optimistic row needs no reconciliation when the server answers.
+	generateGuid: function() {
+		var chars = "0123456789abcdef";
+		var uuid = "";
+		for (var i = 0; i < 32; i++) {
+			if (i === 12) {
+				uuid += "4";
+			} else if (i === 16) {
+				uuid += chars.charAt((Math.floor(Math.random() * 16) & 0x3) | 0x8);
+			} else {
+				uuid += chars.charAt(Math.floor(Math.random() * 16));
+			}
+			if (i === 7 || i === 11 || i === 15 || i === 19) {
+				uuid += "-";
+			}
+		}
+		return uuid;
+	},
+	nextSortPosition: function() {
+		var highest = 0;
+		for (var i = 0; i < this.viewTasks.length; i++) {
+			var pos = parseInt(this.viewTasks[i].sortPosition, 10) || 0;
+			if (pos > highest) {
+				highest = pos;
+			}
+		}
+		return highest + 1;
+	},
+	//Strip the projection's bookkeeping before anything goes over the wire.
+	toWireTask: function(task) {
+		return {
+			guid: task.guid,
+			title: task.title,
+			notes: task.notes || "",
+			completed: !!task.completed,
+			sortPosition: task.sortPosition
+		};
+	},
+
 	/* Updater */
 	doUpdateCheck: function() {
-		//Check for updates
 		this.$.myUpdater.CheckForUpdate("Check Mate HD");
 	},
-	handleUpdateFound: function(sender, message) {
+	handleUpdateFound: function() {
 		this.showModal("Update found!<br>" + this.$.myUpdater.UpdateMessage + "<br>Visit your App Store to download it!");
 	},
 	/* Sign In */
@@ -153,16 +396,13 @@ enyo.kind({
 			insecure: this.$.signinPanel.getInsecure(),
 			useCustomServer: this.$.signinPanel.getUseCustomServer(),
 			customServer: this.$.signinPanel.getCustomServer()
-		}
-		enyo.log("New user server config: " + JSON.stringify(this.serverConfig));
+		};
 		Prefs.setCookie("serverConfig", this.serverConfig);
 		this.$.myCheckmate.serverConfig = this.serverConfig;
 
-		enyo.log("New user move: " + this.$.signinPanel.move);
 		this.$.myCheckmate.notation = this.$.signinPanel.move;
 		Prefs.setCookie("move", this.$.signinPanel.move);
 
-		enyo.log("New user grandmaster: " + this.$.signinPanel.grandmaster);
 		this.$.myCheckmate.grandmaster = this.$.signinPanel.grandmaster;
 		Prefs.setCookie("grandmaster", this.$.signinPanel.grandmaster);
 
@@ -172,7 +412,7 @@ enyo.kind({
 		this.$.contentPanels.render();
 		this.$.contentPanels.draggable = true;
 		this.$.buttonLoginOut.setContent("Log Out");
-		window.setTimeout(this.loadTaskList.bind(this), 800);
+		window.setTimeout(enyo.bind(this, "loadTaskList"), 800);
 	},
 	/* UI Events */
 	newTaskTap: function() {
@@ -181,73 +421,73 @@ enyo.kind({
 		this.$.taskDetails.newTask();
 		this.$.contentPanels.setIndex(0);
 	},
-	updateTap: function(inSender, inEvent) {
+	updateTap: function() {
 		this.errorCount = 0;
 		this.loadTaskList();
 	},
-	sweepTap: function(inSender, inEvent) {
+	sweepTap: function() {
 		this.$.mySoundPlayer.soundSweep.Play();
-		this.$.myCheckmate.cleanupTasks(function(inResponse) {
+		this.$.myCheckmate.cleanupTasks(
+			enyo.bind(this, function(inResponse) {
 				if (inResponse && inResponse.tasks) {
-					//enyo.log("sweep tasks response! " + JSON.stringify(inResponse));
-					this.data = inResponse.tasks;
-					this.$.list.setCount(this.data.length);
-					this.$.list.reset();
-
-					for (var i=0;i<this.data.length;i++) {
-						if (this.selectedTask && this.selectedTask.guid == this.data[i].guid)
-							this.$.list.select(i);
-					}
+					this.serverTasks = inResponse.tasks;
+					this.refreshProjection();
 				} else {
 					this.handleAPIError(inResponse);
 				}
-			}.bind(this), function(){
-				this.handleAPIError(inResponse);
-			}
+			}),
+			enyo.bind(this, function(detail) {
+				//The user pressed a button, so answer the button rather than
+				//	routing through the polling back-off, which stays silent.
+				this.showModal("<b>Sweep failed</b><br><br>" + (detail || "The completed tasks could not be cleared."));
+			})
 		);
 	},
 	setupListItem: function(inSender, inEvent) {
-		if(!this.data[inEvent.index]) {
+		var data = this.viewTasks[inEvent.index];
+		if (!data) {
 			return;
 		}
-		var data = this.data[inEvent.index];
 		this.$.tasklistItem.addRemoveClass("itemSelected", this.$.list.isSelected(inEvent.index));
-		if (data.sortPosition == -1) {
+		if (data._deleting) {
 			this.$.tasklistItem.addClass("itemDeleting");
 			this.$.taskTitle.setContent("<i>Swipe again to restore...</i>");
 		}
 		else {
 			this.$.tasklistItem.removeClass("itemDeleting");
-			this.$.taskTitle.setContent(data.title);	//+ " - " + data.sortPosition
+			this.$.taskTitle.setContent(data.title);
 		}
-		this.$.taskCheck.setValue(data.completed);
+		this.$.taskCheck.setValue(!!data.completed);
 	},
 	listItemTap: function(inSender, inEvent) {
+		var data = this.viewTasks[inEvent.index];
+		if (!data) {
+			return;
+		}
 		if (!this.$.taskDetails.inEdit) {
-			enyo.log("You tapped on row: " + this.data[inEvent.index].title + " which is currently complete: " + (this.data[inEvent.index].completed || "false"));
 			if (inSender.kind == "enyo.Checkbox") {
-				var newVal = !this.data[inEvent.index].completed;
-				this.data[inEvent.index].completed = newVal;
-				inSender.setValue(newVal);
-				this.updateTaskFromList(this.data[inEvent.index]);
-				if (this.data[inEvent.index].completed) {
+				//Queue the intent; the projection puts it on screen. We never
+				//	write to viewTasks directly, so the next refresh can't undo it.
+				var toggled = this.toWireTask(data);
+				toggled.completed = !data.completed;
+				inSender.setValue(toggled.completed);
+				this.$.myCheckmate.updateTask(toggled);
+				if (toggled.completed) {
 					this.$.mySoundPlayer.soundCheck.Play();
 				}
-				else
+				else {
 					this.$.mySoundPlayer.soundUncheck.Play();
+				}
 				return true;
 			} else {
-				enyo.log("Setting task details...");
-				this.selectedTask = this.data[inEvent.index];
-				this.$.taskDetails.taskGuid = this.data[inEvent.index].guid;
-				this.$.taskDetails.taskTitle = this.data[inEvent.index].title || "";
-				this.$.taskDetails.taskNotes = this.data[inEvent.index].notes || "";
+				this.selectedTask = data;
+				this.$.taskDetails.taskGuid = data.guid;
+				this.$.taskDetails.taskTitle = data.title || "";
+				this.$.taskDetails.taskNotes = data.notes || "";
 				this.$.taskDetails.render();
 			}
 		} else {
-			enyo.log("The active panel is " + this.$.contentPanels.getActive())
 			if (this.$.contentPanels.getActive() == "app_mainView_taskDetails [checkmate.DetailViewer]") {
-				enyo.log("Tap cancelled because detail is editing!");
 				return true;
 			} else {
 				this.$.taskDetails.editCancelTap();
@@ -255,370 +495,269 @@ enyo.kind({
 		}
 	},
 	listReorderStart: function(inSender, inEvent) {
-		enyo.warn("list is about to be re-ordered");
-		var i = inEvent.index;
-		if(!this.data[i]) {
+		var data = this.viewTasks[inEvent.index];
+		if (!data) {
 			return;
 		}
-		if (this.$.taskDetails.inEdit)
-		{
-			enyo.warn("dragging while editing, but can't be cancelled");
+		if (this.$.taskDetails.inEdit) {
 			return;
 		}
-		this.$.reorderTitle.setContent(this.data[i].title);
+		this.$.reorderTitle.setContent(data.title);
 		return true;
 	},
 	listReorderDone: function(inSender, inEvent) {
-		if(!this.data[inEvent.reorderFrom] || !this.data[inEvent.reorderTo]) {
+		var from = inEvent.reorderFrom;
+		var to = inEvent.reorderTo;
+		if (!this.viewTasks[from] || !this.viewTasks[to]) {
 			return;
 		}
-		if (this.$.taskDetails.inEdit)
-		{
-			enyo.warn("Dragged while editing, but can't be cancelled");
+		if (this.$.taskDetails.inEdit) {
 			return;
 		}
-		var movedItem = enyo.clone(this.data[inEvent.reorderFrom]);
-		var evictedItem = this.data[inEvent.reorderTo];
+		if (this.viewTasks[from].sortPosition == this.viewTasks[to].sortPosition) {
+			return;
+		}
 
-		if (movedItem.sortPosition != evictedItem.sortPosition) {
-			enyo.warn("List has been reordered, old sortPos: " + movedItem.sortPosition + " swapping with " + evictedItem.sortPosition);
-			this.data.splice(inEvent.reorderFrom,1);
-			this.data.splice((inEvent.reorderTo),0,movedItem);
-	
-			newPos = 1;
-			for (var i=this.data.length-1; i >= 0; i--) {
-				this.data[i].sortPosition = newPos;
-				newPos++;
-			}
-			this.$.list.reset();
-			this.updateTaskFromList(this.data);
-		} else {
-			enyo.log("List resort did not result in any changes and will be ignored");
+		//Work on a copy: renumbering in place would mutate the projection, which
+		//	is meant to be derived and disposable.
+		var reordered = [];
+		var i;
+		for (i = 0; i < this.viewTasks.length; i++) {
+			reordered.push(this.toWireTask(this.viewTasks[i]));
 		}
+		var moved = reordered.splice(from, 1)[0];
+		reordered.splice(to, 0, moved);
+
+		var position = 1;
+		for (i = reordered.length - 1; i >= 0; i--) {
+			reordered[i].sortPosition = position;
+			position++;
+		}
+		this.$.myCheckmate.queueBatch(reordered);
+		this.$.myCheckmate.processQueue();
 	},
 	listItemSwipeStart: function(inSender, inEvent) {
-		enyo.warn("list item started swiping");
-		var i = inEvent.index;
-		if(!this.data[i]) {
+		var data = this.viewTasks[inEvent.index];
+		if (!data || this.$.taskDetails.inEdit) {
 			return;
 		}
-		if (this.$.taskDetails.inEdit)
-		{
-			enyo.log("swiping while editing!");
-			return;
-		}
-		if (!this.$.taskDetails.inEdit) {
-			this.$.swipeItem.removeClass("swipeInfo");
-			this.$.swipeItem.removeClass("swipeDelete");
-			this.$.swipeItem.removeClass("swipeUndo");
-			if (this.data[i].sortPosition != -1) {
-				if (inEvent.xDirection == 1) {
-					enyo.log("show info");
-					this.$.swipeTitle.setContent("<img src='assets/info.png' style='height:32px'>");
-					this.$.swipeItem.addClass("swipeInfo");
-				}
-				else {
-					enyo.log("show delete");
-					this.$.swipeTitle.setContent("<img src='assets/delete.png' style='height:32px'>");
-					this.$.swipeItem.addClass("swipeDelete");
-				}
-			} else {
-				enyo.log("show undo");
-				this.$.swipeTitle.setContent("<img src='assets/undo.png' style='height:32px'>");
-				this.$.swipeItem.addClass("swipeUndo");
-			}
-			return true;
-		}
-	},
-	listItemSwipeDone: function(inSender, inEvent) {
-		enyo.log("Item swipe has completed");
-		var i = inEvent.index;
-		if(!this.data[i]) {
-			return;
-		}
-		if (this.$.taskDetails.inEdit)
-		{
-			enyo.log("Swiping while editing!");
-			return;
-		}
-		if (this.data[i].sortPosition != -1) {
+		this.$.swipeItem.removeClass("swipeInfo");
+		this.$.swipeItem.removeClass("swipeDelete");
+		this.$.swipeItem.removeClass("swipeUndo");
+		if (!data._deleting) {
 			if (inEvent.xDirection == 1) {
-				enyo.log("Swipe for show/hide info panel")
-				this.selectedTask = this.data[inEvent.index];
-				//enyo.log("selected task is: " + this.selectedTask.guid);
-				this.$.list.select(inEvent.index);
-				
-				this.$.taskDetails.taskTitle = this.data[inEvent.index].title || "";
-				this.$.taskDetails.taskNotes = this.data[inEvent.index].notes || "";
-				this.$.taskDetails.render();
-				if (this.$.contentPanels.getActive() == "app_mainView_body [enyo.FittableRows]")
-					this.$.contentPanels.setIndex(0);
-				else
-					this.$.contentPanels.setIndex(1);
+				this.$.swipeTitle.setContent("<img src='assets/info.png' style='height:32px'>");
+				this.$.swipeItem.addClass("swipeInfo");
 			}
 			else {
-				enyo.log("Swipe for item delete");
-				this.$.list.deselect(inEvent.index);
-				this.data[inEvent.index].oldSortPosition = this.data[inEvent.index].sortPosition;
-				this.data[inEvent.index].sortPosition = "-1";
-				this.$.list.refresh();
-				window.setTimeout(this.doDelayedItemDelete.bind(this, this.data[inEvent.index]), 3000);
+				this.$.swipeTitle.setContent("<img src='assets/delete.png' style='height:32px'>");
+				this.$.swipeItem.addClass("swipeDelete");
 			}
 		} else {
-			enyo.log("Swipe to cancel delete");
-			this.$.swipeItem.removeClass("itemDeleting");
-			this.data[inEvent.index].sortPosition = this.data[inEvent.index].oldSortPosition;
-			this.selectedTask = this.data[inEvent.index];
-			this.$.list.renderRow(i);
-			this.cancelDeletes.push(this.data[inEvent.index].guid);
+			this.$.swipeTitle.setContent("<img src='assets/undo.png' style='height:32px'>");
+			this.$.swipeItem.addClass("swipeUndo");
 		}
-	},
-	doDelayedItemDelete: function(theItem) {
-		if (this.cancelDeletes.indexOf(theItem.guid) != -1) {
-			enyo.log("Canceling delete of the item with title: " + theItem.title);
-			this.cancelDeletes.splice(this.cancelDeletes.indexOf(theItem.guid), 1);
-		} else {
-			enyo.log("Deleting the item with title: " + theItem.title);
-			//Don't trust previous index
-			for (var i=0;i<this.data.length;i++) {
-				if (theItem.guid == this.data[i].guid)
-				{
-					enyo.log("Sending delete update to server for task: " + theItem.title);
-					delete this.data[i].oldSortPosition;
-					this.updateTaskFromList(this.data[i]);
-					if (this.$.taskGuid == theItem.guid)
-						this.$.taskDetails.reset();
-					this.$.mySoundPlayer.soundDelete.Play();
-					break;
-				}
-			}
-			// Note: Don't remove from local data here! The task has sortPosition = "-1"
-			// and will be filtered out by the server response. Removing it immediately
-			// causes a race condition where background refreshes bring it back if the
-			// server hasn't processed the delete yet.
-		}
-	},
-	updateTaskFromList: function(newItemData) {
-		var self = this;
-		this.newItemData = newItemData;
-		this.$.myCheckmate.updateTask(newItemData);
-	},
-	updateTaskFromDetails: function(inSender, inEvent) {
-		this.$.contentPanels.setIndex(1);
-
-		//Determine if this is a task edit or create
-		var foundTask = false
-		if (this.selectedTask) {
-			//edit
-			for (var i=0;i<this.data.length;i++) {
-				if (this.selectedTask.guid == this.data[i].guid)
-				{
-					this.data[i].title = this.$.taskDetails.taskTitle;
-					this.data[i].notes = this.$.taskDetails.taskNotes;
-					foundTask = this.data[i];
-				}
-			}
-			this.selectedTask = null;
-			this.$.list.refresh();
-		}
-		if (!foundTask && this.$.taskDetails.taskTitle != "") {
-			//create
-			// Use timestamp-based temporary GUID to handle multiple rapid creates
-			var tempGuid = "new-" + Date.now();
-			var localTask = {
-				guid: tempGuid,
-				title: this.$.taskDetails.taskTitle,
-				notes: this.$.taskDetails.taskNotes,
-				completed: false,
-				sortPosition: this.data.length > 0 ? (this.data[0].sortPosition + 1) : 1
-			}
-			// Optimistically add new task to local list to prevent race condition
-			// The server will return the real GUID and position on next refresh
-			this.data.unshift(localTask);
-			this.$.list.setCount(this.data.length);
-			this.$.list.reset();
-			enyo.log("Optimistically added new task to local list with temp GUID: " + tempGuid);
-			// Create separate object for server with "new" as GUID
-			foundTask = {
-				guid: "new",
-				title: this.$.taskDetails.taskTitle,
-				notes: this.$.taskDetails.taskNotes,
-				completed: false
-			}
-		}
-		//Perform the update on the server
-		if(foundTask) {
-			this.$.myCheckmate.updateTask(foundTask);
-		}
-		else {
-			this.handleAPIError(inResponse);
-		}
-
 		return true;
 	},
-	checkTasksEqual: function(task1, task2) {
-		isEqual = true;
-		if (task1.guid != task2.guid)
-			isEqual = false;
-		if (task1.title != task2.title)
-			isEqual = false;
-		if (task1.notes != task2.notes)
-			isEqual = false;
-		if (task1.completed != task2.completed)
-			isEqual = false;
-		if (task1.sortPosition != task2.sortPosition)
-			isEqual = false;
-		return isEqual;
+	listItemSwipeDone: function(inSender, inEvent) {
+		var data = this.viewTasks[inEvent.index];
+		if (!data || this.$.taskDetails.inEdit) {
+			return;
+		}
+		if (!data._deleting) {
+			if (inEvent.xDirection == 1) {
+				this.selectedTask = data;
+				this.$.list.select(inEvent.index);
+				this.$.taskDetails.taskGuid = data.guid;
+				this.$.taskDetails.taskTitle = data.title || "";
+				this.$.taskDetails.taskNotes = data.notes || "";
+				this.$.taskDetails.render();
+				if (this.$.contentPanels.getActive() == "app_mainView_body [enyo.FittableRows]") {
+					this.$.contentPanels.setIndex(0);
+				}
+				else {
+					this.$.contentPanels.setIndex(1);
+				}
+			}
+			else {
+				//The delete is an op held for its undo window, not a setTimeout
+				//	over a shared object. A refresh landing in the window rewrites
+				//	serverTasks and leaves the op -- and therefore the delete -- alone.
+				this.$.list.deselect(inEvent.index);
+				var tombstone = this.toWireTask(data);
+				tombstone.sortPosition = -1;
+				this.$.myCheckmate.queueOp(tombstone, "delete", this.$.myCheckmate.deleteHoldMs);
+				this.$.mySoundPlayer.soundDelete.Play();
+				if (this.$.taskDetails.taskGuid === data.guid) {
+					this.$.taskDetails.reset();
+				}
+			}
+		} else {
+			//Undo is just dropping the op, which is atomic and can't be raced.
+			var ops = this.$.myCheckmate.getPendingOps();
+			for (var i = ops.length - 1; i >= 0; i--) {
+				if (ops[i].type === "delete" && ops[i].guid === data.guid) {
+					if (this.$.myCheckmate.cancelOp(ops[i].id)) {
+						break;
+					}
+				}
+			}
+		}
 	},
+	updateTaskFromDetails: function() {
+		this.$.contentPanels.setIndex(1);
+
+		var title = this.$.taskDetails.taskTitle;
+		var notes = this.$.taskDetails.taskNotes;
+		var wasEditing = !!this.selectedTask;
+		var existing = wasEditing ? this.findTaskByGuid(this.selectedTask.guid) : null;
+
+		//An edit whose task vanished underneath us (deleted here or elsewhere)
+		//	must not silently fall through to the create branch -- that would
+		//	resurrect it under a brand new guid as a duplicate.
+		if (wasEditing && !existing) {
+			this.selectedTask = null;
+			this.showModal("That task no longer exists, so the change wasn't saved.");
+			return true;
+		}
+
+		if (existing) {
+			//The service rejects an empty title outright, which would dead-letter
+			//	the op. Refuse it here where we can actually tell the user.
+			if (!title || title === "") {
+				this.showModal("A task needs a title.");
+				return true;
+			}
+			var edited = this.toWireTask(existing);
+			edited.title = title;
+			edited.notes = notes;
+			this.selectedTask = null;
+			this.$.myCheckmate.updateTask(edited);
+		}
+		else if (title && title !== "") {
+			this.$.myCheckmate.updateTask({
+				guid: this.generateGuid(),
+				title: title,
+				notes: notes || "",
+				completed: false,
+				sortPosition: this.nextSortPosition()
+			});
+		}
+		return true;
+	},
+
 	/* API Functions */
 	loadTaskList: function() {
-		enyo.log("Doing thorough update!");
-		window.clearInterval(updateInt);
 		this.startSpinner();
-		this.$.myCheckmate.getTasks();
+		//Drain first, then pull, so a refresh always observes our own writes.
+		this.$.myCheckmate.processQueue();
 	},
 	doBackgroundRefresh: function() {
-		enyo.log("Doing background update!");
-		window.clearInterval(updateInt);
-		this.startSpinner();
 		this.$.myCheckmate.processQueue();
+	},
+	//Always re-arm. The old code cleared the interval before deciding whether to
+	//	do anything, so any early return left the app with no poll at all.
+	scheduleNextRefresh: function() {
+		window.clearInterval(updateInt);
+		updateInt = window.setInterval(enyo.bind(this, "doBackgroundRefresh"), updateRate);
 	},
 	startSpinner: function() {
 		this.$.buttonUpdate.addClass("active");
 		this.$.imgSync.setAttribute("src", "assets/sync-spin.gif");
-		this.$.buttonUpdate.disabled = true;
+		this.$.buttonUpdate.setDisabled(true);
 	},
 	stopSpinner: function() {
-		window.setTimeout(function() {
+		window.setTimeout(enyo.bind(this, function() {
 			this.$.buttonUpdate.removeClass("active");
 			this.$.imgSync.setAttribute("src", "assets/sync.png");
-			this.$.buttonUpdate.disabled = true;
-		}.bind(this), 1200);
+			//Re-enable it. This used to set disabled = true here as well, which
+			//	left the manual sync button permanently off.
+			this.$.buttonUpdate.setDisabled(false);
+		}), 1200);
 	},
 	backoffToOffline: function(reason) {
 		if (reason) {
-			enyo.warn("Backing off to offline, error count: " + this.errorCount + " because: " + reason);
-			window.clearInterval(updateInt);
-			updateInt = window.setInterval(this.doBackgroundRefresh.bind(this), updateRate);
+			enyo.warn("Backing off, error count: " + this.errorCount + " because: " + reason);
+			this.scheduleNextRefresh();
 		}
 		if (this.errorCount >= 3) {
-			enyo.error("Error count exceeded back-off threshold, going offline");
 			this.showAsOffline();
 		}
 	},
 	showAsOffline: function() {
 		window.clearInterval(updateInt);
 		this.stopSpinner();
-		window.setTimeout(function() {
+		window.setTimeout(enyo.bind(this, function() {
 			this.$.buttonUpdate.removeClass("active");
 			this.$.imgSync.setAttribute("src", "assets/offline.png");
-			this.$.buttonUpdate.disabled = false;
-		}.bind(this), 1800);
+			this.$.buttonUpdate.setDisabled(false);
+		}), 1800);
 		this.errorCount = 0;
 	},
-	handlePostSuccess: function(inRequest, inResponse) {
+	handlePostSuccess: function(inSender, inResponse, moreQueued) {
+		this.errorCount = 0;
+		//The POST response already carries the authoritative list, so applying it
+		//	here removes a whole round trip and one more window in which a stale
+		//	GET could land.
+		this.serverTasks = inResponse.tasks;
+		this.refreshProjection();
+		if (moreQueued) {
+			this.$.myCheckmate.processQueue();
+		} else {
+			this.stopSpinner();
+			this.scheduleNextRefresh();
+		}
+	},
+	handlePostError: function(op, detail, reason) {
+		//The op is gone from the queue but the user's intent is not silently
+		//	lost: say which task, and what happened to it.
+		var label = "A change could not be saved.";
+		if (op && op.task && op.task.title) {
+			label = "\"" + op.task.title + "\" could not be saved.";
+		}
+		this.errorCount++;
+		this.refreshProjection();
+		this.showModal("<b>" + label + "</b><br><br>" + (detail || reason));
+		this.stopSpinner();
+		this.scheduleNextRefresh();
+	},
+	handleRefreshSuccess: function(inSender, inResponse) {
+		this.stopSpinner();
 		if (inResponse && inResponse.tasks) {
-			for (var i=0;i<this.data.length;i++) {
-				if (this.selectedTask && this.selectedTask.guid == this.data[i].guid)
-					this.$.list.select(i);
-			}
-			this.loadTaskList();
+			this.errorCount = 0;
+			//A refresh may only write server truth. Local intent lives in the op
+			//	log and is replayed on top, so nothing pending can be clobbered.
+			this.serverTasks = inResponse.tasks;
+			this.refreshProjection();
+			this.scheduleNextRefresh();
 		} else {
 			this.handleAPIError(inResponse);
 		}
 	},
-	handlePostError: function(inRequest, inResponse){
-		enyo.warn("Task list update error occurred!");
-		this.handleAPIError(inResponse);
-		this.stopSpinner();
-	},
-	handleRefreshSuccess: function(inRequest, inResponse) {
-		this.stopSpinner();
-		
-		if (inResponse && inResponse.tasks) {
-			//Check if the list length has changed
-			isDirty = false;
-			if (inResponse.tasks.length != this.data.length) {
-				enyo.log("List length has changed, the list needs to be redrawn.");
-				isDirty = true;
-			}
-			knownGuids = [];
-			for (var i=0;i<this.data.length;i++) {
-				knownGuids.push(this.data[i].guid);
-			}
-			//Update individual tasks if we can
-			for (var i=0;i<inResponse.tasks.length;i++) {
-				if (isDirty)
-					break;
-
-				//Check if the new list has items we don't know about
-				if (knownGuids.indexOf(inResponse.tasks[i].guid) == -1) {
-					enyo.log("List items have changed, the list needs to be redrawn.");
-					isDirty = true;
-				}
-				if (!isDirty && !this.checkTasksEqual(this.data[i], inResponse.tasks[i])) {
-					enyo.log("Row " + i + " has changed and needs to be updated!");
-					enyo.log("Current: " + JSON.stringify(this.data[i]));
-					enyo.log("New:     " + JSON.stringify(inResponse.tasks[i]));
-					this.data[i] = inResponse.tasks[i];
-					this.$.list.renderRow(i);
-					if (this.data[i].sortPosition != inResponse.tasks[i].sortPosition) {
-						enyo.log("Row " + i + " needs to be re-positioned");
-					}
-				}
-			}
-			//Update the whole list if we can't
-			if (isDirty){	 //TODO: Can we make this even more individual, instead of throwing out the whole list?
-				this.data = inResponse.tasks;
-				this.$.list.setCount(this.data.length);
-				this.$.list.reset();
-			}
-			
-			//Schedule next update
-			enyo.log("Refresh success, scheduling next refresh");
-			window.clearInterval(updateInt);
-			updateInt = window.setInterval(this.doBackgroundRefresh.bind(this), updateRate);
-		} else {
-			enyo.log("Unknown refresh response: " + inResponse);
-			this.handleAPIError(inResponse);
-		}
-	}, 
-	handleRefreshError: function(inResponse) {
-		enyo.warn("Task list refresh error occurred!");
-		this.handleAPIError(inResponse);
+	handleRefreshError: function(inSender, detail) {
+		this.handleAPIError({error: detail, failed: true, xhrResponse: inSender ? inSender.xhrResponse : null});
 		this.stopSpinner();
 	},
 	/* UI Controls */
 	handleAPIError: function(errorResponse) {
 		this.errorCount++;
-		if (errorResponse) {
-			enyo.warn("An API called resulted in an error: " + JSON.stringify(errorResponse));
-			if (errorResponse.failed) {
-				if (errorResponse.xhrResponse && errorResponse.xhrResponse.body) {
-					this.showModal(errorResponse.xhrResponse.body);
-					this.showAsOffline();
-				}
-				else {
-					if (errorResponse.xhrResponse.status) {
-						this.backoffToOffline("API call with error code: " + errorResponse.xhrResponse.status);
-					}
-					else {
-						this.backoffToOffline("API call with no status");
-					}
-				}
-			}
-			else if (errorResponse.error) {
-				this.showModal("<b>Error</b><br><br>" + errorResponse.error);
-				this.showAsOffline();
-			}
-			else {
-				this.showModal("An error occured during an API call. Check your server settings and network connection. If you are self-hosting, make sure you have CORS setup correctly.");
-				this.showAsOffline();
-			}	
-		} else {
-			enyo.warn("An API call resulted in an unknown error. Check your server settings and network connection. If you are self-hosting, make sure you have CORS setup correctly.");
-			this.backoffToOffline("Unknown Error");
+		var status = null;
+		if (errorResponse && errorResponse.xhrResponse && errorResponse.xhrResponse.status) {
+			status = errorResponse.xhrResponse.status;
 		}
+		//Transient: a timeout, a dropped connection, or a 5xx. Keep polling and
+		//	stay quiet -- nagging the user about a blip they can't act on is how
+		//	the app used to end up offline over a momentary write collision.
+		if (status === null || status >= 500) {
+			this.backoffToOffline(status ? ("API call with error code: " + status) : "API call with no status");
+			return;
+		}
+		//Permanent: wrong credentials, unknown move, malformed request. It won't
+		//	fix itself, so say what the server said and stop polling.
+		var message = (errorResponse && errorResponse.error) ? errorResponse.error :
+			"An error occured during an API call. Check your server settings and network connection. If you are self-hosting, make sure you have CORS setup correctly.";
+		this.showModal("<b>Error</b><br><br>" + message);
+		this.showAsOffline();
 	},
 	showModalFromLogin: function() {
 		this.showModal(this.$.signinPanel.messageToShow);
@@ -627,7 +766,7 @@ enyo.kind({
 		this.$.popupMessage.setContent(message);
 		this.$.popupModal.setShowing(true);
 	},
-	closeModal: function(inSender, inEvent) {
+	closeModal: function() {
 		this.$.popupModal.setShowing(false);
 	},
 	grabberDragstart: function() {
@@ -638,20 +777,13 @@ enyo.kind({
 	},
 	panelAnimationDone: function() {
 		if (this.$.contentPanels.getActive() != "app_mainView_body [enyo.FittableRows]") {
-			enyo.log("detail panel opened " + JSON.stringify(this.selectedTask));
-			if (!this.selectedTask || this.selectedTask.title == "")
-			{
-				enyo.log("no selected task, creating a new one")
+			if (!this.selectedTask || this.selectedTask.title === "") {
 				this.$.taskDetails.newTask();
-			} else {
-				enyo.log("user wants to edit task");
 			}
 		}
 		else {
-			enyo.log("detail panel closed");
 			this.$.taskDetails.render();
 			if (this.$.taskDetails.inEdit) {
-				enyo.log("closed while in edit, cancelling")
 				this.$.taskDetails.editCancelTap();
 			}
 		}

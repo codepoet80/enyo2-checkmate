@@ -3,7 +3,10 @@
         "enyo": false,
         "$L": false,
         "onyx": false,
-        "checkmate": false
+        "checkmate": false,
+        "Prefs": false,
+        "device": false,
+        "JSON": false
     },
     "es3": true,
     "evil": false,
