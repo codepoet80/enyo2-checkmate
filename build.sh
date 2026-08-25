@@ -126,6 +126,80 @@ switch_java_version() {
     return 1
 }
 
+# Consume the next build number, zero-padded to 4 digits.
+#
+# The version alone isn't enough to bust a cache, because there is usually more
+# than one build per version -- rebuild twice at 2.2.0 and returning visitors
+# would still be holding the first build's assets. The counter lives in a file so
+# it survives across builds, and it is committed so it stays monotonic across
+# clones rather than restarting at 1 on a fresh checkout.
+#
+# Writes nothing but the number to stdout; the caller captures it.
+next_build_number() {
+    bnfile="$mydir/buildnumber"
+    bn=""
+    if [ -f "$bnfile" ]; then
+        bn=$(tr -cd '0-9' < "$bnfile")
+    fi
+    if [ -z "$bn" ]; then
+        bn=0
+    fi
+    bn=$((bn + 1))
+    printf '%s\n' "$bn" > "$bnfile"
+    printf '%04d' "$bn"
+}
+
+# Stamp the deployed service worker's cache names with version + build number.
+#
+# The service worker's activate handler deletes every cache whose name isn't the
+# current CACHE_NAME/DYNAMIC_CACHE, so those names ARE the cache-busting
+# mechanism. Hard-coded, they never change, and a returning visitor keeps being
+# served the previous build's assets. Deriving them from appinfo.json ties cache
+# invalidation to the version number that already gets bumped for a release, and
+# the build number covers repeat builds of the same version.
+#
+# This rewrites the deploy OUTPUT, never enyo-app/serviceworker.js, so a failed
+# build can't leave the source tree modified.
+stamp_service_worker() {
+    sw="$mydir/enyo-app/deploy/serviceworker.js"
+    appinfo="$mydir/enyo-app/appinfo.json"
+
+    # webOS builds don't ship one; nothing to do.
+    if [ ! -f "$sw" ]; then
+        return 0
+    fi
+    if [ ! -f "$appinfo" ]; then
+        echo "WARNING: $appinfo not found; leaving service worker cache names unchanged"
+        return 0
+    fi
+
+    appver=$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$appinfo" | head -1)
+
+    # Refuse anything that isn't a plain version string rather than splicing it
+    # into a sed replacement unchecked.
+    case "$appver" in
+        ""|*[!0-9A-Za-z._-]*)
+            echo "WARNING: could not read a usable \"version\" from appinfo.json (got '$appver');"
+            echo "         leaving service worker cache names unchanged"
+            return 0
+            ;;
+    esac
+
+    # Only burn a build number once we know we have something to stamp.
+    stampver="$appver-$(next_build_number)"
+
+    # -i.bak is the form both BSD (macOS) and GNU sed accept. The deploy dir is
+    # wiped at the end of every build, so this always rewrites a pristine copy of
+    # the source and the suffix can't compound across builds.
+    sed -i.bak -E \
+        -e "s/(checkmate-dynamic-v)[0-9A-Za-z._-]+/\\1$stampver/g" \
+        -e "s/(checkmate-v)[0-9A-Za-z._-]+/\\1$stampver/g" \
+        "$sw"
+    rm -f "$sw.bak"
+
+    echo " - Service worker cache stamped: $stampver"
+}
+
 mydir=$(cd `dirname $0` && pwd)
 mkdir -p $mydir/bin/
 
@@ -234,6 +308,11 @@ else
     fi
     $mydir/enyo-app/tools/deploy.sh $verbose
 fi
+
+# Both branches above have now produced enyo-app/deploy, and nothing has consumed
+# it yet, so this is the one place that covers every target that ships a service
+# worker (www and Android; webOS has no service worker support at all).
+stamp_service_worker
 
 if [ $android -eq 1 ]; then
     echo "Building for Android..."

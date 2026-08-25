@@ -1,8 +1,13 @@
 // Check Mate HD - Progressive Web App Service Worker
 // Provides offline functionality and image caching for cross-platform compatibility
 
-const CACHE_NAME = 'checkmate-v1.2';
-const DYNAMIC_CACHE = 'checkmate-dynamic-v1.2';
+// Kept in step with "version" in appinfo.json -- build.sh rewrites both of these
+// at deploy time, so bumping the version there is what invalidates the cache.
+// The activate handler below deletes every cache whose name isn't one of these,
+// so if the name never changes, a returning visitor is served the previous
+// build's assets forever.
+const CACHE_NAME = 'checkmate-v2.2.0';
+const DYNAMIC_CACHE = 'checkmate-dynamic-v2.2.0';
 
 // Critical app assets to cache on install
 const STATIC_ASSETS = [
