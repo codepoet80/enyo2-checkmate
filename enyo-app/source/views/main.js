@@ -475,6 +475,9 @@ enyo.kind({
 		this.$.contentPanels.render();
 		this.$.contentPanels.draggable = true;
 		this.$.buttonLoginOut.setContent("Log Out");
+		//Whatever the panel teardown above stirred up, land on the list with the
+		//	detail pane idle and read-only rather than half-way into a new task.
+		this.$.taskDetails.reset();
 		window.setTimeout(enyo.bind(this, "loadTaskList"), 800);
 	},
 	/* UI Events */
@@ -849,7 +852,17 @@ enyo.kind({
 		//unused, handling panel animation events is more reliable
 	},
 	panelAnimationDone: function() {
-		if (this.$.contentPanels.getActive() != "app_mainView_body [enyo.FittableRows]") {
+		//The index, not a string comparison against the active control. The old
+		//	test compared a control object to the literal
+		//	"app_mainView_body [enyo.FittableRows]", so it depended on a generated
+		//	id and was true at moments when the panels were only passing through.
+		//	Signing in destroys the sign-in panel and re-renders, and the
+		//	transition that reports lands with the detail pane active -- so
+		//	newTask() ran and left the pane in edit mode with nothing selected.
+		//	The next tap on a task was then swallowed by listItemTap's inEdit
+		//	guard, which cancels the edit instead of opening the task, and the
+		//	user had to tap a second time.
+		if (this.$.contentPanels.getIndex() === 0) {
 			if (!this.selectedTask || this.selectedTask.title === "") {
 				this.$.taskDetails.newTask();
 			}

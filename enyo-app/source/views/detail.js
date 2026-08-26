@@ -40,8 +40,11 @@ enyo.kind({
 		this.$.taskTitle.setValue(this.getTaskTitle());
 		this.$.taskNotes.setValue(this.getTaskNotes());
 		
-		this.$.taskTitle.setDisabled(!this.inEdit);
-		this.$.taskNotes.setDisabled(!this.inEdit);
+		//Not setDisabled(): read-only is the invariant this pane exists to
+		//	enforce, so assert it on every render instead of trusting that the
+		//	model and the DOM never drifted apart.
+		this.$.taskTitle.syncDisabled(!this.inEdit);
+		this.$.taskNotes.syncDisabled(!this.inEdit);
 		this.$.taskSave.setShowing(this.inEdit);
 		if (this.inEdit) {
 			this.$.taskEditCancel.setContent("Cancel");

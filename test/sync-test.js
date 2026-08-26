@@ -104,6 +104,7 @@ global.enyo = {
         if (def.published) {
             Object.keys(def.published).forEach(function (name) {
                 var cap = name.charAt(0).toUpperCase() + name.slice(1);
+                if (def[name] === undefined) { def[name] = def.published[name]; }
                 if (!def['get' + cap]) {
                     def['get' + cap] = function () {
                         return this[name] !== undefined ? this[name] : def.published[name];
@@ -149,6 +150,8 @@ load('enyo-app/source/api/checkmate.js');
 load('enyo-app/source/api/version.js');
 load('enyo-app/source/views/main.js');
 load('enyo-app/source/views/signin.js');
+load('enyo-app/source/views/SpellCheckInput.js');
+load('enyo-app/source/views/detail.js');
 
 /* ---------- instantiate ---------- */
 function resetWorld() {
@@ -931,6 +934,167 @@ section('Server settings reach the api');
     ok('  and carries the credentials over', api2.notation === "Queen to King 7" && api2.grandmaster === 'Vladimir Kramnik');
     ok('  and the scramble key follows the new notation',
        v2.scrambleMove() === 'queen-king7', v2.scrambleMove());
+})();
+
+/* ================= READ-ONLY UNTIL YOU TAP EDIT ================= */
+section('A task opens read-only');
+(function () {
+    // A spell-check field, with just enough of enyo.Control to see where the
+    // read-only state actually ends up.
+    function makeField() {
+        var def = kinds['checkmate.SpellCheckInput'];
+        var f = {};
+        for (var k in def) { f[k] = def[k]; }
+        f.attributes = {contenteditable: 'false', spellcheck: 'true'};
+        f.classes = '';
+        f.node = {innerText: '', innerHTML: '', attrs: {}, focus: function () {}};
+        f.hasNode = function () { return this.node; };
+        // The real ones record on the control and apply to the node, which is
+        // the whole point: a re-render replays this.attributes.
+        f.setAttribute = function (n, v) { this.attributes[n] = v; if (this.node) { this.node.attrs[n] = v; } };
+        f.addRemoveClass = function (n, add) {
+            var has = this.classes.indexOf(n) !== -1;
+            if (add && !has) { this.classes += ' ' + n; }
+            if (!add && has) { this.classes = this.classes.replace(n, ''); }
+        };
+        f.setValue = function (v) { this.node.innerText = v || ''; };
+        f.getValue = function () { return this.node.innerText; };
+        // Rendering replays the control's attributes onto a fresh node -- which
+        // is exactly the moment the old code lost the state.
+        f.rerender = function () { this.node = {innerText: this.node.innerText, attrs: {}, focus: function () {}};
+            for (var a in this.attributes) { this.node.attrs[a] = this.attributes[a]; } };
+        return f;
+    }
+
+    var f = makeField();
+    f.syncDisabled(true);
+    ok('a locked field is not editable', f.attributes.contenteditable === 'false');
+    f.syncDisabled(false);
+    ok('an unlocked field is editable', f.attributes.contenteditable === 'true');
+    ok('  on the node too', f.node.attrs.contenteditable === 'true');
+
+    // The bug: the state used to be written straight to the DOM node, so the
+    // control still thought it was "false" and any re-render reverted it.
+    f.rerender();
+    ok('editability survives a re-render', f.node.attrs.contenteditable === 'true');
+
+    // And the mirror: setDisabled() is a published setter and does nothing when
+    // the value has not changed, so it could never put a node back in step.
+    f.disabled = true;              // model says locked...
+    f.node.attrs.contenteditable = 'true';   // ...while the node is still open
+    f.syncDisabled(true);
+    ok('a stale editable node is forced back', f.node.attrs.contenteditable === 'false');
+    ok('  and the control agrees', f.attributes.contenteditable === 'false');
+
+    // Now the pane itself. The invariant the user actually sees: the Save button
+    // shows exactly when the fields accept typing.
+    function makeDetail() {
+        var def = kinds['checkmate.DetailViewer'];
+        var d = {};
+        for (var k in def) { d[k] = def[k]; }
+        d.inherited = function () {};
+        d.taskTitle = ''; d.taskNotes = ''; d.taskGuid = '';
+        d.getTaskTitle = function () { return this.taskTitle; };
+        d.getTaskNotes = function () { return this.taskNotes; };
+        d.$ = {
+            taskTitle: makeField(),
+            taskNotes: makeField(),
+            taskDetailTitle: {content: '', setContent: function (c) { this.content = c; }},
+            taskEditCancel: {content: '', setContent: function (c) { this.content = c; }},
+            taskSave: {showing: false, disabled: false,
+                       setShowing: function (v) { this.showing = v; },
+                       setDisabled: function (v) { this.disabled = v; }}
+        };
+        d.doSave = function () { this.saved = (this.saved || 0) + 1; };
+        return d;
+    }
+
+    function consistent(d) {
+        var editable = d.$.taskTitle.attributes.contenteditable === 'true';
+        var notesEditable = d.$.taskNotes.attributes.contenteditable === 'true';
+        return editable === d.$.taskSave.showing && notesEditable === d.$.taskSave.showing;
+    }
+
+    var d = makeDetail();
+    d.taskTitle = 'Look at me';
+    d.taskNotes = 'some notes';
+    d.render();
+    ok('an opened task is read-only', d.$.taskTitle.attributes.contenteditable === 'false');
+    ok('  with no Save button', d.$.taskSave.showing === false);
+    ok('  and an Edit button', d.$.taskEditCancel.content === 'Edit');
+    ok('  and it shows the task', d.$.taskTitle.getValue() === 'Look at me');
+    ok('  consistently', consistent(d));
+
+    d.editCancelTap();
+    ok('tapping Edit unlocks the fields', d.$.taskTitle.attributes.contenteditable === 'true');
+    ok('  and reveals Save', d.$.taskSave.showing === true);
+    ok('  and offers Cancel', d.$.taskEditCancel.content === 'Cancel');
+    ok('  consistently', consistent(d));
+
+    d.editCancelTap();
+    ok('cancelling locks them again', d.$.taskTitle.attributes.contenteditable === 'false');
+    ok('  and hides Save', d.$.taskSave.showing === false);
+    ok('  consistently', consistent(d));
+
+    // A re-render in between -- which is what happens when the panels relayout --
+    // must not leave a locked pane typeable.
+    d.editCancelTap();
+    d.$.taskTitle.rerender(); d.$.taskNotes.rerender();
+    d.editCancelTap();
+    ok('a re-render mid-edit still ends up locked', d.$.taskTitle.node.attrs.contenteditable === 'false');
+    ok('  consistently', consistent(d));
+
+    var d2 = makeDetail();
+    d2.newTask();
+    ok('a new task starts editable', d2.$.taskTitle.attributes.contenteditable === 'true');
+    ok('  with Save showing', d2.$.taskSave.showing === true);
+    ok('  consistently', consistent(d2));
+    d2.reset();
+    ok('reset locks it back down', d2.$.taskTitle.attributes.contenteditable === 'false');
+    ok('  and hides Save', d2.$.taskSave.showing === false);
+    ok('  consistently', consistent(d2));
+})();
+
+section('Signing in leaves the detail pane idle');
+(function () {
+    resetWorld(); var api = makeApi(); var v = makeView(api);
+    var newTasks = 0, renders = 0, cancels = 0, resets = 0;
+    var index = 1;
+    v.$.contentPanels = {getIndex: function () { return index; }, setIndex: function (i) { index = i; }};
+    v.$.taskDetails = {inEdit: false,
+        newTask: function () { newTasks++; this.inEdit = true; },
+        render: function () { renders++; },
+        editCancelTap: function () { cancels++; this.inEdit = false; },
+        reset: function () { resets++; this.inEdit = false; }};
+
+    // A transition that reports while the list is showing must not start a new
+    // task. It used to compare the active control against a literal id string,
+    // which was true at moments when the panels were only passing through --
+    // signing in re-renders them -- so newTask() ran and left the pane in edit
+    // mode. listItemTap's inEdit guard then swallowed the next tap on a task,
+    // cancelling the edit instead of opening it.
+    index = 1;
+    v.panelAnimationDone();
+    ok('settling on the list starts no new task', newTasks === 0);
+    ok('  and clears any stale edit', renders === 1);
+
+    index = 1;
+    v.$.taskDetails.inEdit = true;
+    v.panelAnimationDone();
+    ok('a stale edit is cancelled on the way back', cancels === 1 && v.$.taskDetails.inEdit === false);
+
+    // Deliberately going to the detail pane with nothing selected still starts
+    // a new task, which is the point of that branch.
+    index = 0;
+    v.selectedTask = null;
+    v.panelAnimationDone();
+    ok('opening the empty detail pane does start a new task', newTasks === 1);
+
+    index = 0;
+    v.selectedTask = {guid: 'A', title: 'Look at me'};
+    v.$.taskDetails.inEdit = false;
+    v.panelAnimationDone();
+    ok('opening a selected task does not', newTasks === 1);
 })();
 
 console.log('\n========================================');
