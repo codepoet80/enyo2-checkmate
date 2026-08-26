@@ -36,6 +36,10 @@
 	var APP_NAME = "Check Mate";
 	var CREDENTIAL_KEY = "credentials";
 
+	//How hard to try before believing "there is no account here".
+	var CONNECT_ATTEMPTS = 3;
+	var CONNECT_RETRY_MS = 1200;
+
 	var store = null;
 	var connected = false;
 
@@ -116,10 +120,28 @@
 		if (s.isSignedIn() && connected) {
 			return cb(null);
 		}
-		s.useDeviceAccount(function (err) {
-			connected = !err;
-			cb(err || null);
-		});
+		//The account service is not always ready the instant the app is, and
+		//	asking too early comes back as "no account signed in" rather than as
+		//	something to wait for. One attempt was enough to make an app that had
+		//	credentials saved show its log-in screen anyway, because by the time
+		//	anything asked a second time it worked. Try a few times before
+		//	believing the answer.
+		var attempt = 0;
+		function tryAdopt() {
+			attempt++;
+			s.useDeviceAccount(function (err) {
+				if (!err) {
+					connected = true;
+					return cb(null);
+				}
+				if (attempt < CONNECT_ATTEMPTS) {
+					return global.setTimeout(tryAdopt, CONNECT_RETRY_MS);
+				}
+				connected = false;
+				cb(err);
+			});
+		}
+		tryAdopt();
 	}
 
 	//A cached token says nothing about whether the account it belongs to is

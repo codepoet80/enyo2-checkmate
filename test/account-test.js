@@ -36,13 +36,17 @@ global.XMLHttpRequest = function () {};
 
 // The account service over the Luna bus. deviceToken is what the device would
 // hand back; set it to null to model "nobody is signed in on this device".
-var bus = {deviceToken: "token-1", alias: "jon@example.test", calls: 0};
+var bus = {deviceToken: "token-1", alias: "jon@example.test", calls: 0, readyAfter: 0};
 global.PalmServiceBridge = function () {
 	this.call = function (url, args) {
 		bus.calls++;
 		var self = this;
-		var reply = bus.deviceToken
-			? JSON.stringify({token: bus.deviceToken, accountAlias: bus.alias})
+		// readyAfter models a service that isn't up yet: the first N calls come
+		// back with nothing, exactly as they do just after an app launches.
+		var token = (bus.calls > bus.readyAfter) ? bus.deviceToken : null;
+		if (bus.readyAfter && bus.calls > bus.readyAfter) { token = token || "token-1"; }
+		var reply = token
+			? JSON.stringify({token: token, accountAlias: bus.alias})
 			: JSON.stringify({});
 		setTimeout(function () { self.onservicecallback(reply); }, 0);
 	};
@@ -108,6 +112,7 @@ function resetWorld() {
 	server.failNext = null;
 	bus.deviceToken = "token-1";
 	bus.calls = 0;
+	bus.readyAfter = 0;
 	freshStore();
 }
 
@@ -138,18 +143,33 @@ section("Adopting the device's account sign-in");
 		ok("  and it knows whose account it is", CheckmateAccount.accountName() === "jon@example.test");
 		ok("  and reports itself connected", CheckmateAccount.isConnected() === true);
 
-		// A device with nobody signed in must say so, not hang or throw.
+		// The account service is not always ready the instant the app is, and
+		// asking too early answers "no account" rather than "wait". Giving up on
+		// the first answer is what made a device with credentials saved show its
+		// log-in screen anyway -- by the time anything asked again, it worked.
 		resetWorld();
 		bus.deviceToken = null;
-		var err2 = "pending";
-		CheckmateAccount.connect(function (e) { err2 = e; });
+		bus.readyAfter = 2;          // the third call is the one that works
+		var err3 = "pending";
+		CheckmateAccount.connect(function (e) { err3 = e; });
 		setTimeout(function () {
-			ok("no device account is reported clearly", !!err2 && err2.code === "no_device_account", err2);
-			ok("  in words a user can act on",
-				CheckmateAccount.describeError(err2).indexOf("Device Info") !== -1,
-				CheckmateAccount.describeError(err2));
-			roundTrip();
-		}, 5);
+			ok("a service that wakes up late still connects", err3 === null, err3);
+			ok("  after more than one attempt", bus.calls >= 3, bus.calls);
+
+			// But a device with genuinely nobody signed in must still say so.
+			resetWorld();
+			bus.deviceToken = null;
+			var err2 = "pending";
+			CheckmateAccount.connect(function (e) { err2 = e; });
+			setTimeout(function () {
+				ok("no device account is reported clearly", !!err2 && err2.code === "no_device_account", err2);
+				ok("  in words a user can act on",
+					CheckmateAccount.describeError(err2).indexOf("Device Info") !== -1,
+					CheckmateAccount.describeError(err2));
+				ok("  having tried more than once first", bus.calls >= 3, bus.calls);
+				roundTrip();
+			}, 5000);
+		}, 5000);
 	}, 5);
 })();
 

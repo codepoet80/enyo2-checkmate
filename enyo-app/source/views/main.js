@@ -477,12 +477,30 @@ enyo.kind({
 				return;
 			}
 			CheckmateAccount.load(function(err, saved) {
-				if (err || !saved) {
-					self.doSigninOut();
+				if (saved) {
+					self.adoptAccountCredentials(saved);
 					return;
 				}
-				self.adoptAccountCredentials(saved);
+				//"This account has nothing saved" is an answer. A failure to ask
+				//	is not: show the log-in screen either way, but keep trying in
+				//	the background so a service that woke up late still spares the
+				//	user a log-in they don't need.
+				self.doSigninOut();
+				if (err) {
+					window.setTimeout(enyo.bind(self, "retryAccountRestore"), 4000);
+				}
 			});
+		});
+	},
+	retryAccountRestore: function() {
+		if (this.$.myCheckmate.notation) {
+			return;
+		}
+		var self = this;
+		CheckmateAccount.load(function(err, saved) {
+			if (saved) {
+				self.adoptAccountCredentials(saved);
+			}
 		});
 	},
 	//Sign in with what the account gave us, exactly as loginDone() would have
@@ -504,6 +522,19 @@ enyo.kind({
 		Prefs.setCookie("move", saved.move);
 		this.$.myCheckmate.grandmaster = saved.grandmaster;
 		Prefs.setCookie("grandmaster", saved.grandmaster);
+
+		//A restore can land while the log-in screen is already up -- the account
+		//	service is slower to answer than the app is to give up on it. Take the
+		//	screen away rather than asking the user to log in to an app that has
+		//	just signed itself in. Anything they have typed is left alone: better
+		//	a needless log-in than one that eats what you were entering.
+		if (this.$.signinPanel && !this.$.signinPanel.$.inputMove.getValue()) {
+			this.$.signinPanel.destroy();
+			this.$.contentPanels.components.pop();
+			this.$.contentPanels.render();
+			this.$.contentPanels.draggable = true;
+			this.$.contentPanels.setIndex(1);
+		}
 
 		this.credentialsSaved = true;
 		this.setLoginButton("credentials");
