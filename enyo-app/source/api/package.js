@@ -1,5 +1,7 @@
 enyo.depends(
 	"scramble.js",
+	"webos-app-storage.js",
+	"account.js",
 	"checkmate.js",
 	"SoundPlayer.js",
 	"prefs.js",

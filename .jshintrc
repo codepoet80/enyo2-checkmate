@@ -7,6 +7,10 @@
         "Prefs": true,
         "BuildInfo": true,
         "CheckmateScramble": true,
+        "CheckmateAccount": true,
+        "WebOSAppStorage": true,
+        "PalmServiceBridge": false,
+        "PalmSystem": false,
         "module": false,
         "device": false,
         "JSON": false

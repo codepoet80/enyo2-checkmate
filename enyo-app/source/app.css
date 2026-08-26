@@ -157,13 +157,45 @@
     font-family: 'Helvetica Neue', 'Nimbus Sans L', Arial, sans-serif;
     font-size: large;
 }
+/* The "save to my webOS Account" row on the sign-in screen. Only ever rendered
+   on a webOS device that is actually signed in to an account. */
+.accountCheckboxRow {
+    margin-top: 18px;
+    margin-bottom: 2px;
+}
+.accountCheckbox {
+    vertical-align: middle;
+    margin: 0 10px 0 0;
+}
+.accountCheckboxLabel {
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+/* Padlock in place of the Log Out label, once credentials live on the account. */
+.lockIcon {
+    height: 26px;
+    width: 26px;
+    vertical-align: middle;
+}
+
+/* Tap-to-reveal eye next to the grandmaster on the credentials screen. Sized
+   generously: it is a touch target on a device, not just a glyph. */
+.revealIcon {
+    height: 32px;
+    width: 32px;
+    margin-left: 12px;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
 /* The one time a user ever sees their credentials, so make them easy to copy
    down by hand and easy to select on a device that can. */
+/* Typography only: pair it with darkDetailLabel or taskDetailLabel to pick up
+   that context's colour and indent, rather than fighting them with its own. */
 .credentialValue {
-    margin-left: 8px;
-    margin-right: 8px;
     margin-top: 2px;
-    margin-bottom: 10px;
+    margin-bottom: 14px;
     font-size: x-large;
     font-weight: bold;
     word-wrap: break-word;

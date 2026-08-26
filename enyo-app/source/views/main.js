@@ -58,7 +58,15 @@ enyo.kind({
 					{kind: "onyx.Button", classes:"buttonRight toolButton", ontap: "sweepTap", components: [
 						{tag: "img", attributes: {src: "assets/sweep.png"}}
 					]},
-					{kind: "onyx.Button", name:"buttonLoginOut", content: "Log In", classes:"buttonRight toolButton", ontap: "doSigninOut"}
+					//Text while there is a log in or out to do; a padlock once the
+					//	credentials live on the user's webOS Account, because then
+					//	"log out" is the wrong offer -- the next launch would just
+					//	pull them back. The padlock opens the credentials screen,
+					//	which is where forgetting them for good lives.
+					{kind: "onyx.Button", name:"buttonLoginOut", classes:"buttonRight toolButton", ontap: "tapLoginOut", components: [
+						{tag: "span", name: "labelLoginOut", content: "Log In"},
+						{tag: "img", name: "imgLock", classes:"lockIcon", showing: false, attributes: {src: "assets/lock.png", alt: "Credentials"}}
+					]}
 				]}
 			]}
 		]},
@@ -84,6 +92,9 @@ enyo.kind({
 			this.serverTasks = [];
 			this.viewTasks = [];
 			this.holdTimer = null;
+			//True once we know the user's webOS Account is holding these
+			//	credentials, which is what turns the toolbar button into a padlock.
+			this.credentialsSaved = false;
 		};
 	}),
 	//Naming a task exactly this fills its notes with the running build instead of
@@ -115,10 +126,17 @@ enyo.kind({
 				//	screen via the projection; show it before the network answers.
 				this.refreshProjection();
 				this.loadTaskList();
-				this.$.buttonLoginOut.setContent("Log Out");
+				this.setLoginButton("out");
+				//Already logged in here, but the padlock still depends on whether
+				//	the account is holding these same credentials.
+				this.checkSavedCredentials();
 			}
 			else {
-				window.setTimeout(enyo.bind(this, "doSigninOut"), 500);
+				//Nothing stored on this device. On webOS the account may already
+				//	be holding credentials from another device, which is the whole
+				//	point of saving them -- so ask before falling back to the
+				//	log-in screen.
+				window.setTimeout(enyo.bind(this, "signInFromAccountOrPrompt"), 500);
 			}
 			this.$.contentPanels.setIndex(1);
 
@@ -419,15 +437,147 @@ enyo.kind({
 	handleUpdateFound: function() {
 		this.showModal("Update found!<br>" + this.$.myUpdater.UpdateMessage + "<br>Visit your App Store to download it!");
 	},
+	/* webOS Account credentials */
+
+	accountUsable: function() {
+		return typeof CheckmateAccount !== "undefined" && CheckmateAccount.isSupported();
+	},
+	//Does the account hold the credentials this device is using? Only then is
+	//	the padlock the right thing to show.
+	checkSavedCredentials: function() {
+		if (!this.accountUsable()) {
+			return;
+		}
+		var self = this;
+		CheckmateAccount.connect(function(err) {
+			if (err) {
+				return;
+			}
+			CheckmateAccount.load(function(err, saved) {
+				if (err || !saved) {
+					return;
+				}
+				if (saved.move === self.$.myCheckmate.notation) {
+					self.credentialsSaved = true;
+					self.setLoginButton("credentials");
+				}
+			});
+		});
+	},
+	signInFromAccountOrPrompt: function() {
+		if (!this.accountUsable()) {
+			this.doSigninOut();
+			return;
+		}
+		var self = this;
+		CheckmateAccount.connect(function(err) {
+			if (err) {
+				enyo.log("No webOS Account to restore from: " + CheckmateAccount.describeError(err));
+				self.doSigninOut();
+				return;
+			}
+			CheckmateAccount.load(function(err, saved) {
+				if (err || !saved) {
+					self.doSigninOut();
+					return;
+				}
+				self.adoptAccountCredentials(saved);
+			});
+		});
+	},
+	//Sign in with what the account gave us, exactly as loginDone() would have
+	//	done with what the user typed.
+	adoptAccountCredentials: function(saved) {
+		//The account carries the server settings alongside the credentials,
+		//	because credentials alone don't identify a self-hosted list -- a
+		//	second device would auto-log-in against the wrong server. Falls back
+		//	to whatever this device already had, then to the defaults.
+		var config = saved.server || Prefs.getCookie("serverConfig", null) || {
+			urlBase: this.$.myCheckmate.getUrlBase(), insecure: false,
+			useCustomServer: false, customServer: ""
+		};
+		this.serverConfig = config;
+		Prefs.setCookie("serverConfig", config);
+		this.applyServerConfig(config);
+
+		this.$.myCheckmate.notation = saved.move;
+		Prefs.setCookie("move", saved.move);
+		this.$.myCheckmate.grandmaster = saved.grandmaster;
+		Prefs.setCookie("grandmaster", saved.grandmaster);
+
+		this.credentialsSaved = true;
+		this.setLoginButton("credentials");
+		this.refreshProjection();
+		this.loadTaskList();
+	},
+	showCredentials: function() {
+		var newComponent = this.$.contentPanels.createComponent({
+			name: "credentialsPanel", kind: "checkmate.CredentialViewer",
+			onCloseCredentials: "closeCredentials", onForgetCredentials: "forgetCredentials"
+		}, {owner: this});
+		newComponent.setMove(this.$.myCheckmate.notation);
+		newComponent.setGrandmaster(this.$.myCheckmate.grandmaster);
+		newComponent.setAccountName(this.accountUsable() ? CheckmateAccount.accountName() : null);
+		newComponent.render();
+		this.$.contentPanels.render();
+		this.$.contentPanels.setIndex(2);
+		this.$.contentPanels.draggable = false;
+	},
+	closeCredentials: function() {
+		this.$.contentPanels.getActive().destroy();
+		this.$.contentPanels.components.pop();
+		this.$.contentPanels.setIndex(1);
+		this.$.contentPanels.render();
+		this.$.contentPanels.draggable = true;
+		return true;
+	},
+	//Forgetting clears the account copy and this device together, which is what
+	//	makes it a real way out rather than a log-out the next launch undoes.
+	forgetCredentials: function() {
+		var self = this;
+		CheckmateAccount.forget(function(err) {
+			if (err) {
+				self.showModal("<b>Your credentials could not be removed from your webOS Account.</b><br><br>" +
+					CheckmateAccount.describeError(err) + "<br><br>Nothing was changed.");
+				return;
+			}
+			self.credentialsSaved = false;
+			self.closeCredentials();
+			self.doSigninOut();
+		});
+		return true;
+	},
+
 	/* Sign In */
+	//"in" and "out" label the button; "credentials" swaps the label for the
+	//	padlock that opens the credentials screen.
+	setLoginButton: function(mode) {
+		this.$.labelLoginOut.setShowing(mode !== "credentials");
+		this.$.imgLock.setShowing(mode === "credentials");
+		if (mode !== "credentials") {
+			this.$.labelLoginOut.setContent(mode === "out" ? "Log Out" : "Log In");
+		}
+	},
+	tapLoginOut: function() {
+		if (this.credentialsSaved) {
+			this.showCredentials();
+			return true;
+		}
+		this.doSigninOut();
+		return true;
+	},
 	doSigninOut: function() {
 		window.clearInterval(updateInt);
 		this.errorCount = 0;
+		//A plain log out leaves the account copy alone -- forgetting it is a
+		//	deliberate act on the credentials screen -- but this device is no
+		//	longer using it, so the padlock goes.
+		this.credentialsSaved = false;
 		this.notation = "";
 		Prefs.setCookie("move", this.notation);
 		this.grandmaster = "";
 		Prefs.setCookie("grandmaster", this.grandmaster);
-		this.$.buttonLoginOut.setContent("Log In");
+		this.setLoginButton("in");
 		var newComponent = this.$.contentPanels.createComponent({
 			name: "signinPanel", kind: "checkmate.Signin",
 			onLogin:"loginDone", onMessage:"showModalFromLogin"
@@ -454,6 +604,8 @@ enyo.kind({
 		this.$.myCheckmate.setCustomServer(config.customServer);
 	},
 	loginDone: function() {
+		//Read before the teardown below destroys the panel that knows it.
+		var savedToAccount = !!(this.$.signinPanel && this.$.signinPanel.savedToAccount);
 		this.serverConfig = {
 			urlBase: this.$.signinPanel.getUrlBase(),
 			insecure: this.$.signinPanel.getInsecure(),
@@ -474,7 +626,13 @@ enyo.kind({
 		this.$.contentPanels.setIndex(1);
 		this.$.contentPanels.render();
 		this.$.contentPanels.draggable = true;
-		this.$.buttonLoginOut.setContent("Log Out");
+		this.setLoginButton("out");
+		//The sign-in panel reports whether it managed to put these credentials
+		//	on the user's webOS Account; that is what the padlock reflects.
+		if (savedToAccount) {
+			this.credentialsSaved = true;
+			this.setLoginButton("credentials");
+		}
 		//Whatever the panel teardown above stirred up, land on the list with the
 		//	detail pane idle and read-only rather than half-way into a new task.
 		this.$.taskDetails.reset();

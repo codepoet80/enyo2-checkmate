@@ -185,6 +185,11 @@ function makeView(api) {
         imgSync: {setAttribute: function () {}},
         popupMessage: {setContent: function () {}},
         popupModal: {setShowing: function () {}},
+        // The toolbar button is text or a padlock; both children have to exist.
+        labelLoginOut: {content: '', showing: true,
+            setContent: function (c) { this.content = c; },
+            setShowing: function (v) { this.showing = v; }},
+        imgLock: {showing: false, setShowing: function (v) { this.showing = v; }},
         taskDetails: {inEdit: false, taskGuid: '', render: function () {}, reset: function () {}},
         list: {
             setCount: function (n) { listCalls.push('setCount:' + n); },
@@ -921,7 +926,6 @@ section('Server settings reach the api');
         getUseCustomServer: function () { return true; },
         getCustomServer: function () { return 'lan.example.test:8080'; }
     };
-    v2.$.buttonLoginOut = {setContent: function () {}};
     v2.$.contentPanels = {
         components: [{}],
         getActive: function () { return {destroy: function () {}}; },

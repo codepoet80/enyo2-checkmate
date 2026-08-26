@@ -9,3 +9,7 @@ Gruntfile.js
 tasks
 tools
 test
+
+# Vendored verbatim from webOSArchive/webos-common; keep it byte-identical so it
+# can be re-synced from upstream without a diff to reconcile.
+enyo-app/source/api/webos-app-storage.js
