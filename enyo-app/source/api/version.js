@@ -71,16 +71,9 @@ BuildInfo = {
 		return (clean.length > 220) ? clean.substring(0, 217) + "..." : clean;
 	},
 
-	//The service worker details come from the caller because reading them is
-	//	async and belongs to the view. Pass {serviceWorker, updateStatus}, or
-	//	nothing when neither is known.
-	describe: function(info) {
-		var sw = (info && info.serviceWorker) ? info.serviceWorker : "not available";
-		var update = (info && info.updateStatus) ? info.updateStatus : "unknown";
+	describe: function() {
 		var lines = [];
 		lines.push("App build:      " + this.sanitize(this.getVersion()));
-		lines.push("Service worker: " + this.sanitize(sw));
-		lines.push("Update status:  " + this.sanitize(update));
 		lines.push("Display mode:   " + this.sanitize(this.getDisplayMode()));
 		lines.push("Platform:       " + this.sanitize(this.getPlatform()));
 		lines.push("Checked:        " + this.sanitize(new Date().toString()));

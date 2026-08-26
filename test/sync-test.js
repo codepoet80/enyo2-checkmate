@@ -531,11 +531,9 @@ section('about:version build report');
     ok('a stamped bundle reports its version', BuildInfo.getVersion() === '2.3.0-0007');
     ok('  isStamped() is true', BuildInfo.isStamped() === true);
 
-    var note = BuildInfo.describe({serviceWorker: 'checkmate-v2.3.0-0007', updateStatus: 'up to date'});
+    var note = BuildInfo.describe();
     ok('note carries the app build', note.indexOf('2.3.0-0007') !== -1, note);
-    ok('note carries the service worker version', note.indexOf('checkmate-v2.3.0-0007') !== -1, note);
     ok('note names the display mode', note.indexOf('Display mode:') !== -1, note);
-    ok('note names the update status', note.indexOf('up to date') !== -1, note);
     ok('note is within the 1000 char server limit', note.length <= 1000, note.length);
 
     // the service rejects nothing here, but strip_tags() would silently eat
@@ -543,9 +541,6 @@ section('about:version build report');
     ok('angle brackets are stripped', BuildInfo.sanitize('a <b> c').indexOf('<') === -1);
     ok('over-long values are truncated', BuildInfo.sanitize(new Array(500).join('x')).length <= 220);
 
-    var unknown = BuildInfo.describe(null);
-    ok('missing update status says so', unknown.indexOf('Update status:  unknown') !== -1, unknown);
-    ok('missing service worker info says so', unknown.indexOf('not available') !== -1, unknown);
 
     BuildInfo.stamp = realStamp;
 })();
@@ -554,7 +549,6 @@ section('about:version build report');
     resetWorld(); var api = makeApi(); var v = makeView(api);
     var realStamp = BuildInfo.stamp;
     BuildInfo.stamp = '2.3.0-0007';
-    v.serviceWorkerVersion = 'checkmate-v2.3.0-0007';
     v.serverTasks = [task('A', 'First', 3)];
     v.refreshProjection();
     v.$.contentPanels = {setIndex: function () {}};
@@ -580,7 +574,6 @@ section('about:version build report');
     // re-saving an existing one refreshes the reading
     resetWorld(); var api3 = makeApi(); var v3 = makeView(api3);
     BuildInfo.stamp = '2.3.0-0009';
-    v3.serviceWorkerVersion = 'checkmate-v2.3.0-0009';
     v3.serverTasks = [task('Z', 'about:version', 5)];
     v3.serverTasks[0].notes = 'App build:      2.3.0-0001';
     v3.refreshProjection();
