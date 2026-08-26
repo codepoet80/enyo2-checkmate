@@ -1,0 +1,333 @@
+{
+  "comment": "Conformance vectors for Check Mate scrambling. Generated from the JS reference (enyo2-checkmate/enyo-app/source/api/scramble.js). Every port must reproduce these byte for byte.",
+  "marker": "cm1:",
+  "normalize": [
+    {
+      "input": "King to Queen's Rook 3",
+      "expected": "king-queensrook3"
+    },
+    {
+      "input": "Queen to King's Bishop 8",
+      "expected": "queen-kingsbishop8"
+    },
+    {
+      "input": "pawn-queensknight1",
+      "expected": "pawn-queensknight1"
+    },
+    {
+      "input": "Rook to King 5",
+      "expected": "rook-king5"
+    },
+    {
+      "input": "Bishop To Queen 2",
+      "expected": "bishop-queen2"
+    }
+  ],
+  "vectors": [
+    {
+      "move": "king-queensrook3",
+      "plain": "Buy milk",
+      "blob": "cm1:EnnA2ADoopt21lmC"
+    },
+    {
+      "move": "king-queensrook3",
+      "plain": "Tom & Jerry",
+      "blob": "cm1:w79QtWby0H+6iafpRs1GhQ=="
+    },
+    {
+      "move": "king-queensrook3",
+      "plain": "5 < 6 > 4 \"quoted\" 'single'",
+      "blob": "cm1:QqHw3A6B6vZoF1ZqTLjy7o5uapdPN3LeDxL8pZML5/s="
+    },
+    {
+      "move": "king-queensrook3",
+      "plain": "<b>bold</b> <script>alert(1)</script>",
+      "blob": "cm1:RIHjakdoAmW0kqgsQUdOCpODSS8s9tTSUykY38T19JPFqTXME0CB0KsnLQA="
+    },
+    {
+      "move": "king-queensrook3",
+      "plain": "&amp; &amp;amp; &lt;",
+      "blob": "cm1:G4oOw/DEdRIjBerFCp6rQhLnkv9H5RxR"
+    },
+    {
+      "move": "king-queensrook3",
+      "plain": "x",
+      "blob": "cm1:vWFN7qPwY9U="
+    },
+    {
+      "move": "king-queensrook3",
+      "plain": "cafe naive resume",
+      "blob": "cm1:LqaAMpV63JThlVyMeptQgIGglCwkAQU1"
+    },
+    {
+      "move": "king-queensrook3",
+      "plain": "café — naïve 😀",
+      "blob": "cm1:iUdVy/11jF7XVUQOmk3e5z2+aJbx8AGo93nxwA=="
+    },
+    {
+      "move": "king-queensrook3",
+      "plain": "line one\nline two\ttabbed",
+      "blob": "cm1:eUNENZkw6Pd58qUFlWjWoHWiMy+oSp/jWkVhBA=="
+    },
+    {
+      "move": "king-queensrook3",
+      "plain": "  leading and trailing  ",
+      "blob": "cm1:3Zv1P/okTSSz+v4l7013Y29o0kJknKbxXBY45g=="
+    },
+    {
+      "move": "king-queensrook3",
+      "plain": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "blob": "cm1:uve6kJx25LWS23KNhaDNDiPjTN6VQ7rqlrkF15vNo2iL20LrW05TI6S9MyLSs3UZZQDngYneYQxx4e/p+2GotLyI1L/opVS8vbx+vKds6mEgs0cwke/grrhjMHUo1x2Hj6yoTASAE3s0en21soDsfNkZl6/2rFBjvg778y3kDfzAZdAiAKFh4RcArFI5qGgzKNMz7W4WDGhkO/2rc7LynNwW8fQr4dNBqwu/ykOwg1Q+GzHAEKJi4j2ZGZheTWjVhJ6k5c1tmeMPRxEU"
+    },
+    {
+      "move": "king-queensrook3",
+      "plain": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "blob": "cm1:YMIyfIOuQiuqvXrfP3slTktdE0RxDhwFDgpXF+5C1goktFyuCLK157ncfCDh+czpt4dEk3g3HyNXI3aeGlWQsCEVlvsxCit4GFK3cAM9wlQruy66eHxFUFQM5zo7t8xKTXeb8b0FLzR5FlsDdcWcOleyD85C8ydt344Qepu13a+1jnYEDo2j8Fag9FV+UF9AcwkVnDsyg29DYYYMJb+f2GaoDpt/bQ23PD9glffnn55pO1Xw9bHPfj2ujP+2mBqv8yuTFqio0r6pXxU8j/cZWllvuaQaFaqYjmtVre5gxEHRCPdYV+LEPncIDeL168GTM++o5J5jHKwXa4rqh6OicDKTnuD1dNw43Q2EgD397sLeIZKxJMGDXTwv2hAfxv0zIk4tSiBJNwqBUhP9Zo6qBjp02HGqYlBA3Oa3EqoQOyoiiOEvJ3qf/q6JfDevBe7RATehVJU6T4LMRvreqb1eGW6jQU7i0YGrQDenp3FkOVLJPYl+2XFKYJkBXypXmSf7b5s7KVEHZ1bDQoneRxwljNbuhCXfqDvlZhrR91vk4D4hoUmG9gXUv/OG54CHvCAPoBY7wvqD+BJ/hIY2RQo9aQQyi5jScl4LQEnD3/tyPrIAcs4jSOj+9FxtqPcqEGZSc16JFBC0OP+NQMPsVTAnYusgm7YgXzPD5NEszwAT+skEiUtajwqwnuDb7d7B/yOt+Wi1O/emgJOcOMNbo1+MJAwYv5pgobx5YmytWYnYKNCyDC3VeWcsZ+ulN3KMD7FmxKnF0iTaABfSIK8qkh8SiMxdxUYUBT3HVaySxRk9oxR5S0bzBuYmogN2pC0auM/EsMvcgFnzAPY/C/SqE6+wzfCVvo9lHggeZqEM/Y0sidAroNbdSWUmb0B1lmFtux+DiJItcH5PWBZc0yvAVgZVKBUWqcp0jyHrvOJl8lqo3v9lR82Tqafox/Ay7FmL9n8GS+a/Ti/u9V8AOTH7YWldARKlCkSGUvAjOeUiswDiHLWJT/MhMI7g1NVy0e4xuEUgHjtIHZB+7tjyUKbKu2jNQ5Z0K3XlyXMpaNBPnA4uflTN+9Lugw7B6qRcJigf3HtMEH+UCaeeGRSmBSEJgprJ15oADHkD/mnzYMorMyUNS1g9V1M9OA2tjQAW2Tgenfksu5phX09V0eKfZn364ed3o84sjGj0KqZ5jSw5tZjS2HRL2PA+cDIucU2bp5q1IMtN0XXNL0P7Wirbc1rRMR+f4yMqLdCAI43vn8i7G5peHQUu1IdgLeNRPzLxYJhf6GN5Kgdk/wbH1af5uYZbjvbpAgFxbxU0xM+5l4C93s7Oq2YsqTWvAVoFWgH08S8="
+    },
+    {
+      "move": "queen-kingsbishop8",
+      "plain": "Buy milk",
+      "blob": "cm1:qiTlTD6pqvVpMbg8"
+    },
+    {
+      "move": "queen-kingsbishop8",
+      "plain": "Tom & Jerry",
+      "blob": "cm1:qlqXxID80GqP93gG4G+dHA=="
+    },
+    {
+      "move": "queen-kingsbishop8",
+      "plain": "5 < 6 > 4 \"quoted\" 'single'",
+      "blob": "cm1:QgztnTGFydaGCI+mhQg2+/Y8D98q/vUCwugJ1WIOlOo="
+    },
+    {
+      "move": "queen-kingsbishop8",
+      "plain": "<b>bold</b> <script>alert(1)</script>",
+      "blob": "cm1:58N6/MDhL95OCXwkN841XsGNGE94mRygSAjxVZCNvH087T+dOCQlLDz0Cu0="
+    },
+    {
+      "move": "queen-kingsbishop8",
+      "plain": "&amp; &amp;amp; &lt;",
+      "blob": "cm1:Mfr9hfC1muBBluV05qjLbMrC0v4lyEx6"
+    },
+    {
+      "move": "queen-kingsbishop8",
+      "plain": "x",
+      "blob": "cm1:kYRy3EUzg8U="
+    },
+    {
+      "move": "queen-kingsbishop8",
+      "plain": "cafe naive resume",
+      "blob": "cm1:il5ApYBQrI2cOv7Slk+OrwQIO+yilQk8"
+    },
+    {
+      "move": "queen-kingsbishop8",
+      "plain": "café — naïve 😀",
+      "blob": "cm1:2bS0VaxNyS4kf+Qfd63lEjOif37rQ9CTruC0fg=="
+    },
+    {
+      "move": "queen-kingsbishop8",
+      "plain": "line one\nline two\ttabbed",
+      "blob": "cm1:1Oyg19KlnLaPm2G5Pog+jwiR5xSEUjLEIIosrQ=="
+    },
+    {
+      "move": "queen-kingsbishop8",
+      "plain": "  leading and trailing  ",
+      "blob": "cm1:5+fweod+gXNJRxACooGbgDeYWjQX4i30TlMBIw=="
+    },
+    {
+      "move": "queen-kingsbishop8",
+      "plain": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "blob": "cm1:IdHzd2APw2uKN9eux2gwBLHGuAODlSXAhAMEC56EQqX9/7U33r3uf+ajsWePZaQi2kIzGf3O+9c96mqBhY4xI2RwpBv5Prx77O7OfXnZalNGE9UOcFItx4gukzBHnXo9XUNqswTxrZ5mVD+mA0Xr1H59abeiuG2n+pwMgmvB6yUQB6MPl1IOMk33ct1vUajYBfWMx00ZPuw1DGdmZThUsYCfrhanrMtRHoG6aKUB0Zj4cC6gxzLD7t+R5XxAGRQLMv3Vz2BDodpP0WxX"
+    },
+    {
+      "move": "queen-kingsbishop8",
+      "plain": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "blob": "cm1:HSmDYZ7toEhXcOCapvAjMZwohb38igvOFy0IQ3L49YJqPExXXC9zHvuffRZbstW/D5sDoLZfaTVJuwQOgGWnUx1Y6TXAGeDG9wSJIRQod/bZ4oZ4CzEUgepmgF48+U7BVJyxUei3Rr5pHkGYN7Zs+Jd2z91eOMlqimjBvAxR/KBkBrIoL0zfPE4IkEz3brKoHmrdvK2ykJLfsF6iJFmNDwKi643phNX7BOZHKkiHXSr4ZQcYmFRhkMHkHOYsi3mevU9QO+wXr2S6DMYLvSWpEocJGROscYEHU22p4qZrvvXrQyvzI52Jcm9tRrevbveA3AhS7YiyAmRY0OOUW8SSD2ivHG9MTUpT4Z/DKiWHM/F6KbOnJwk6/SyOFjq3yTVezV0y/1YaB1ngtdUwLjbgvCj+hKghJVXRTWupLQThADw46CIfDM9YIhne4r+bnjTmmJBFpqCP3sD9b6stXPoNufE1mqarVYDCc1vbP+hA4cW3VF9W6x1+CRc9O5cSF/eMnZqsegJMvkpU49zdsW5wRr7GWd8EQIcnaNm6l6J8Ml08KPFmHdjC3ZJrP2Myc0h9oNWv1JHZRM4GkiIe3kiuEIQXnmALlRMrWcidfEUkOqvyMLSCLOKR3XtzjqhqUSYhCrbJdSq9yGNag6g7rLWEaZz/FO5PdymkOlBHfii3Ax+N+U05EXQJma/E5XQ5Q4euSaXcZVy/zgaRiZWogMwGo5wGFcaU5y27lrAipszNwEoCz6RdyrwwhX0Ue8f8QPXCl6YaY5fRnLfinZ1EXRlZBr/nRY6adDMCgBOpniuTNQzqbVPq4DyKU7zFO9bmocCHgT2V4OjZV6S4YuV6LWGH6+POvI4f32qKz1ccCTsFArXejuhY8VmvMzZtRVw+6+qC1CMSDi7Q0ArtHfO5kFy+ktdN7QRQ8gg8i/qKj0lBa8xHS6ukdiN7DkjPAsFmHIQWzMh0l8i1HpQVlVMMchq3KV379giemXK4uX0WVAHUJhJajqr/YSRNvYt+OzLzA0N9ydoEz19o+BujslmggRozXo79Brr8JgBvbifrTH6xFgs6XtDAwDEEQaRKcgOagEXoTZ6xwoF5QZDzxnEgLkWnsiqxsNlFrfPpm4AyWG4dYWXDgx8SESfdydYWFejDaekUTr54IViBbBPfHho/CoyfpjWddPwsAj571bK/0LKch1F3pbLCjRYVc9Iq+jV4TtCHba4K1M67L/DEJkjaEzxI/uYjG31fjRZhIva4G0n8CjMTEFteWHBl2O9zRCgmVyKOHgd1NeGWKbOHNZ9uhPsdwBFQRAdgJO5a5migYcrE2Rl8dSjR4DI+OMuXS/Q="
+    },
+    {
+      "move": "pawn-queensknight1",
+      "plain": "Buy milk",
+      "blob": "cm1:9iriFtHmBYt5yuMt"
+    },
+    {
+      "move": "pawn-queensknight1",
+      "plain": "Tom & Jerry",
+      "blob": "cm1:RtFxxHxBlbjeV4APPJrgiA=="
+    },
+    {
+      "move": "pawn-queensknight1",
+      "plain": "5 < 6 > 4 \"quoted\" 'single'",
+      "blob": "cm1:/eR6UpYM/46+bSyq3SYGhIBgZfPC3BferoDM+f49OpQ="
+    },
+    {
+      "move": "pawn-queensknight1",
+      "plain": "<b>bold</b> <script>alert(1)</script>",
+      "blob": "cm1:8ilwiHzGn6xKlN4s/LJSDA+oJatrMdZlpExTTRJixxDEdChBlUpGGCM3Jz0="
+    },
+    {
+      "move": "pawn-queensknight1",
+      "plain": "&amp; &amp;amp; &lt;",
+      "blob": "cm1:4LA5jS2E3qIdHs4XuxMOUfYpPa5VlsqX"
+    },
+    {
+      "move": "pawn-queensknight1",
+      "plain": "x",
+      "blob": "cm1:xaX29a6YTzI="
+    },
+    {
+      "move": "pawn-queensknight1",
+      "plain": "cafe naive resume",
+      "blob": "cm1:K000LfzZuHfdItyfmlK5aj1CEEFkNsM+"
+    },
+    {
+      "move": "pawn-queensknight1",
+      "plain": "café — naïve 😀",
+      "blob": "cm1:uyVpVk4PqVqjyasrOaFIv6CNsfh4k3RORnvsuQ=="
+    },
+    {
+      "move": "pawn-queensknight1",
+      "plain": "line one\nline two\ttabbed",
+      "blob": "cm1:wPuM90LHlS6Nx3fXspjEdGhcIQqsbUxIrW+bqg=="
+    },
+    {
+      "move": "pawn-queensknight1",
+      "plain": "  leading and trailing  ",
+      "blob": "cm1:J+k65a0e4StIWxBuzmcM2om/xt8+Ls1+HW7EuQ=="
+    },
+    {
+      "move": "pawn-queensknight1",
+      "plain": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "blob": "cm1:m4ES8HklSN+VuSTC0J+gPXBjejHTbTllxxjM8SxH8WArRbpK7CygAHI7yimjPyLK5a7ej7HVmRLt70Yk5DTDiU6cSd5SfUuLP07GdeR8b1ZakkgVJ+J/OrMFRnZMdZRTkMWwEH74IS689D97jZnT98ZGQ1raofz5Ww+KmwUow7QbTgiT0SYdP/buxWpayM3axwRLegUFAllVp7crq2nZj+G/3r4hIoMS+8NcWH/tcoxefG86ORUugCvoRM6PfPt9F/VRFs73UIWINhy7"
+    },
+    {
+      "move": "pawn-queensknight1",
+      "plain": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "blob": "cm1:luyLt2MncsQ3wXHaOjbJMNa1st02PlBsx+68EACvc5bdmIiusdzoVCB92VoAG2o8GJmwvp17eLRf2btIA7oc35WzmbH/QpKzrQ5cM1eScvQPelyvn61qLF7VkynZmcFxjgWJuL/UvIdskVje1lRLtnhMiLSsMEGVREjXmGU5AiokqQprzGMTSbiSX68yVago+prCLXwEvygCIQ5/lB8Wvh+xA5zVXS1ZpfT3bxao8NQJ/Xb3kDYBKYrFwkkIGeauTSed/1fA+vSvYrKdyaMo16uY6uIEAMhUmnk9eNRN0aZQdALn2X60BmcenVFqVqksQ95JwGNXMG2u90wNeN74vymIrvj6LISVgvaefmc90mYAhWYwabz2l+zNe8o4bAsTQYezOihOf4/ZIIF5UZm4CcFuPPRzBRTvxiugOz4wmGkedUJwQyxiVJCJt9yQ/qNU7P7H5DBtxKGBfX8CZrUu74Z2ugoAym5EFZSOzbYcy8/6jLr3Feb09V3NCImeRGBTFoNVN/zArRRacxo+iUWSKZLGbjGl+mNRPnokb7TCIYmI0afCOgKnfJ2n1BqBnOiTqvQHKo3/slfZf122G5Ks7UtfLzw2vGeyVvX0+KOWjc8RQW7vg22QVutUgFfSEe99Yuq3zTXhsFJNGWDh1enm/Pr84TFDTMSAelCwsCLLYxV1Y8ZaC/hBoQwB1AjKYEyv403HREe0Bj9Yqp65g/+8r3e+23qGEnIlnKv8W+FhFBSTRsbwHautsFuI6S+6TmuQWYOUkroY+XByuD2WehvegIIK0MVYeLKjC61dVccb3hgwQVPbc5MXSdtEo0TnfKRVkzXSshZVuy+HmdhwDIvXlXIE0HWWdJ9ZwII2pCGaXsdmluUDVbHWCqQ4mbaGY1nQ7RDhCebcjQIQzUshtFA7E7kHUy517kv51WzEg9SpjZCZwaTKWUGcEsIfHin7t6e+eABYcIM2ptKZ1Usk9XAyiSDSn6UgBTyBS03fwF6exWK1ILzMiu71mNQ4ODiRsHL5nqcMLMET/Pk5Z5Le4UWdtb0Z0ei7zvF93WUttzJoC4uQJZ5+jb0/tHkxWzzJJCiKvdtRHM1dvjwXtnM2MXYARDiAWDHIkXSgC+BsxVw4U1ooc8zKZ/yZ7DB4qT8z3d+l8ZxKLSxWts5eZpDFY9ijnpQqL1TS8LFxxrRtPfwGwb8df8NXwklC5W6NJpFpuo9Neiog/vzLPMMhCjgUAu0m/um261lgef05lAWyqfPvi6fGR5hIJ/GbvqatTfPswYMAd2mqblg9jb+s4KqlPkrCcRpJc9sNQmlr4ZjL7la6lQd7A4zUH/d/xfe9cjQ="
+    },
+    {
+      "move": "rook-king5",
+      "plain": "Buy milk",
+      "blob": "cm1:s2ITMV2k6Oj4dtWV"
+    },
+    {
+      "move": "rook-king5",
+      "plain": "Tom & Jerry",
+      "blob": "cm1:OBfIUIh+ASJ033+87OiteA=="
+    },
+    {
+      "move": "rook-king5",
+      "plain": "5 < 6 > 4 \"quoted\" 'single'",
+      "blob": "cm1:YT+GX6EcrCbFfP3yIgQ6fJE6/UpbpKgLnI2tlkRfaiU="
+    },
+    {
+      "move": "rook-king5",
+      "plain": "<b>bold</b> <script>alert(1)</script>",
+      "blob": "cm1:4n7R29rQZl0PA4pNDPzbYlo4yQqbyV5SfJkK6D6J3uKN8ROZcyhbiIw8IgU="
+    },
+    {
+      "move": "rook-king5",
+      "plain": "&amp; &amp;amp; &lt;",
+      "blob": "cm1:We5cnb4U0cw7Mh7cJh9Z8eS3lpV7SXOG"
+    },
+    {
+      "move": "rook-king5",
+      "plain": "x",
+      "blob": "cm1:Yuce1GsG8Dg="
+    },
+    {
+      "move": "rook-king5",
+      "plain": "cafe naive resume",
+      "blob": "cm1:IBqTv9xnj3dwsIlx7lmwe84Xih0OYFo6"
+    },
+    {
+      "move": "rook-king5",
+      "plain": "café — naïve 😀",
+      "blob": "cm1:Xj0Fswh87nVNeN6WXHYI6Ivh+OP1/VrJjAXRSQ=="
+    },
+    {
+      "move": "rook-king5",
+      "plain": "line one\nline two\ttabbed",
+      "blob": "cm1:JIdcp2qWnSK4s9+3BPCQr3Cn+2Q1qrU6ah5B+Q=="
+    },
+    {
+      "move": "rook-king5",
+      "plain": "  leading and trailing  ",
+      "blob": "cm1:PwGAbhpIj0uWXaUshSkRIywHSGiS629WEaOGQw=="
+    },
+    {
+      "move": "rook-king5",
+      "plain": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "blob": "cm1:uaMIUMn1hR/7naF6iS8PWr/J75dk3OyOIpmfZ1PSFD8DAyQVhJDQIqOSQNxLqzfhH02MFJTXzyLbwdvGu0O/ZduUFLYRorTn1QDNGP0qR8+HqgIRdKkEEmo/jAbJ83cssHRzbXBLQ5WYamykjSneCuk9nboMhATyDUm0kLgiVMv1DPwUD1F5ctOVfgZvMMb7Es1nGbOmQZue2zb/UDdMEr56uOaZ0rTE9VJtirsUYwUibBE9XtI1QLXi4itJ32vd+L7GTn2adnDn06jq"
+    },
+    {
+      "move": "rook-king5",
+      "plain": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "blob": "cm1:Pk/29hVlWHZbJNCgl6avzdXr8mPIFsmKyxvydEVKZ7bstRxNP2ygdPPgFpElTVmIuadCAvUod3PugMRsSyRjk0fv+77omLjjMNRCJ2011KodrNu5vJYRPI9bPMryG2J92NeqCq7UsfBa8cXtP9yHVNZZB20uXBXAGUKy+kYJvTE/mqfHPOroxvsgePURpC3htou5YBKkPKFB8psu7K2dSnF/1Dyr8w7lXXiglfcH6hjT3IQToSeZmlO02sZCXhSw+c/xE8VScmuBNdvrsiMX38+k7uAmXnvdKfB//zMad0WZw56Va8aHcQG4P5Lqi6FL0z0hkWDiQSaCY4EX9xbA8csRAfNuJhcCalewHYsljpN/0gN/54ux8kZQsixkP+udrfHfnj90hdmHYwVTtKck4nzgsEJZJYddRD5Z1bnObGnepwDhb47PF2XBPGtAYQ5GX9kqW86XowI6HbLEqfoxvNR8q7laV2Ypvn4wFUMUYElxw+c0Q5Di4IFk04RLWdZgjpTUyQ5Zw4e1rMDJbb9GQqMYRqeyJJ7c7lENw+JlpTwB8OimfMIOwM31Cy2LMo6kjuhxyD3GbWCTQqrQC+8M6ihjrGH7DDsDxDGwTFbqu51x451Kmnsr6qBlTi4B0G2M+Ak7qhbMDGxR1gyiU+qImIEkjvBTjsb9GTEyvas5JDuELxrAHIHP7Nz284xyzVu6bdxJ7UDwVKgbhrH/u+XZKVyFmaDE8qdrIGt5Q0/K1D2vy0Vsv4ciCkthh+g+lSn93LlNxTpLBKksr4bxgysbWLx0MjLFb2HIJf1M+8UVmBqk/WyxzhHZhdFrS1dAkwr4gJbTcNPUT5+uANTmOmd0CWdMG+Q6XPJ+aLVi8rLI2dyejX9jsn/HNqMXprYLILqD7nsPVxxJ2pRYDc6IYmztk3q8r8xVHcFy9VFJnuNgVqNUinPuAa3Uk+rkHYXmUOoiZE+0vdAhsyhU3QyIxp/IstSeWAvxrPiN+/4DjXfkSockxADUAUXLRjMD6EWf/UEB7UZ/b78i0r0R/bWWaZzZNnSpZuiNntI42c/b6pkfnD+cOC/SoWB0OZ8gvDQrxswm82N7xGQRxO/4dG+GHEvQoS2AFpp5yEQ8avBYrqgzmHbdL4xDu4ySghpAOkaiQOri3sAAnDQnaM3BW6FOCkun5QN28S/+xKZh/yWTtLXc9Bl/QiZSG0F4bzQnDLv+d2rHdiFQeFnFLQ5Q+h2gpCkwe0EXAxxGPR609mukidTuGK533Hdn8g1NvSQHjHo3hlzMMwupdwC395CSYewtzoSfjWceGl+pT1PXUIilAFyavsuplTSt1d3iYHm60vA="
+    },
+    {
+      "move": "bishop-queen2",
+      "plain": "Buy milk",
+      "blob": "cm1:2t0XT7sAUF8x6i4K"
+    },
+    {
+      "move": "bishop-queen2",
+      "plain": "Tom & Jerry",
+      "blob": "cm1:skdLwLaca2obOyNpjVwojQ=="
+    },
+    {
+      "move": "bishop-queen2",
+      "plain": "5 < 6 > 4 \"quoted\" 'single'",
+      "blob": "cm1:/Dnb9kr8kEdBb3MFpumWMdJm048k8NYWPGVIHKgMRNY="
+    },
+    {
+      "move": "bishop-queen2",
+      "plain": "<b>bold</b> <script>alert(1)</script>",
+      "blob": "cm1:+GQNtS2/YDx9ySCAlCr662blusJBhZIvvVwY3CPUz3K7dMiDZAsseLpbu5w="
+    },
+    {
+      "move": "bishop-queen2",
+      "plain": "&amp; &amp;amp; &lt;",
+      "blob": "cm1:6VirfcsNB8361usObPOUy1PQ+KmiLoF8"
+    },
+    {
+      "move": "bishop-queen2",
+      "plain": "x",
+      "blob": "cm1:6UA6YsgMPQo="
+    },
+    {
+      "move": "bishop-queen2",
+      "plain": "cafe naive resume",
+      "blob": "cm1:Cg6HjyxeIgsazGNvjQ/O7srx31wSvwqf"
+    },
+    {
+      "move": "bishop-queen2",
+      "plain": "café — naïve 😀",
+      "blob": "cm1:GFWHHbOUJnDWsRPtPefP2wprKTT/VhijoSIB1g=="
+    },
+    {
+      "move": "bishop-queen2",
+      "plain": "line one\nline two\ttabbed",
+      "blob": "cm1:0XS0kZjttNkwc+FCBfeMBvQsxRBEwrQNhhKwKw=="
+    },
+    {
+      "move": "bishop-queen2",
+      "plain": "  leading and trailing  ",
+      "blob": "cm1:U+FqfSAldQ7yXwYg2UupRES0r7vj9OZcs6sCLA=="
+    },
+    {
+      "move": "bishop-queen2",
+      "plain": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "blob": "cm1:BPUPUPuhDIWAzRuI6xUuomLCE5PLoPssCm8I0xpQNVcb9GIQaMoSRvlQv7a9LhDqLTWEhTSKV68KuUwpd1TlnxkS13PYkezIFgnBBB4Z8wfwRv6zE9gcNN2jGHQuv98XBaEhXek5UAhjKUpLlyQm/sWHUdmcH8bi6OlU+nF9yGEq1f5TwGXUaKib63KTuPMo+pDUDCnCoop8waRnfQR9gxSP3j34Y1P8UBNiUy6nu2QeGPC9pS1kczcLf8IcAxB3re/zJGSEwpi4wLjb"
+    },
+    {
+      "move": "bishop-queen2",
+      "plain": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "blob": "cm1:zj11+hOJT5jmeIfo6eDnSSx7EE4ouzWrUMFoCecZb2rCuNTMVmtvqS1ZqZNUZEg52Ebj2dSJg8R9NP0D7cPk8jd7Q1O8M1s75m+O7DsNsy4rPYroz+Dks4jSY4AHEJsiWBdG0h7/Aud/7TfNXeCYa+7eFzV0U2SZVQc7YWrBHXGQcP6C0qN9EfcwMoooXWf6OkpNxtbpKUMtVXVL1PRXU3wEkl9H7eNBJeaIs5OqUXUCJRCTih6LfEcFzVZ1+2kotVp7hpctAihs3htDwSxYZ6S6Unb7Me8idKIBbtNE5H4Q4S4rALtoxdNTB10GoAoZS08eDMtZNxdtc0fb/VZt/NBJBH5otrqB8jZCgjE4awR47GccOaWtSoXVXh+UoCzqXWUrM87Eyh+UzZoq0qWoYwF6TYrOHcik7c7HFRUsOtzvgrSxu0DAbx1zuDiAzSYMTzlwJiIiDNfYhvBTaxIGp7oQU7bIs903C+4E/lIR2wTENWexbUh1FngyYwC4FaWrNgjHv9qi72vuY0neglaslQfvivqC20pTIm8rHPdvK0vcx9sM1fwXJ6WU+mPJJLMC4ZhMkt0CkXkQBJ2VSPnU4+FEBbAqM4PxGYp7jnp9f8mnmUPWVv4kE1G4WVvsDaR0LKbnHtZVyxZuS2xSCISHfUGJTXX7KAjQrpOYG/CGOR1KULU5R3mX/0fS9S1+mFMYPUo4gJ76wv47FPzhdi5cK8rJ4PNkbFm7JQp3AksIf9VJPtFaG9+5W6VYDte0H+mGW5dfm+g1I2ydyntnCBeh0miFwSeSGjI4Yctp9iPsRz7HiG65Dynx0rnkd02aiCzEz9EP5poaSCxbBywq08fxsDDDltj8zEDM05uJf4XZQ/qGSJBL7NhFXTA83FwHZhcuh9THZ+fCKoI/JqJ4YfSCNGmkiJT4xqqHRb+3SiWClgv6JejtZUzy4XcdovpalzJvuimHC5jzsIqTBfyDjtMst8d9juRUacYaGun6sFiAQGcIosvezTPqA9aJBfiO/VprZOSp/c4194c6e66fHUCMZk/LTU7G6a8xVY6c9fceWgc/ymA1aG0Q2s517UU46YhwpaGITX9wOvR/kqp2HAeoJLFLmJlQJzllqUV9V5e55jWsYGuOwSDfM4orqQGe780occ9nL0OeIjypEzEshOA/tLYSYsffdNSra9z3ump3zNLId/dfaLuQ46EH1r+X7+iZGZPoggfo92TnKWBsljNAS8UeUpG6nKuedSgeQ6TMpiCd0TH/dGOibHdrjHlYFgJe/8U8p7SPhmk+vHJxwQYO9TxUNjXTY5cX0AW54AavTWlDJ6fwNGEqEoPn4ZQ="
+    },
+    {
+      "move": "king-queensrook3",
+      "plain": "",
+      "blob": ""
+    }
+  ]
+}

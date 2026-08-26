@@ -6,6 +6,8 @@
         "checkmate": false,
         "Prefs": true,
         "BuildInfo": true,
+        "CheckmateScramble": true,
+        "module": false,
         "device": false,
         "JSON": false
     },

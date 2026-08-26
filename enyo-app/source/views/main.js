@@ -221,12 +221,55 @@ enyo.kind({
 		var projected = [];
 		for (i = 0; i < order.length; i++) {
 			if (map[order[i]]) {
-				projected.push(map[order[i]]);
+				projected.push(this.toDisplayTask(map[order[i]]));
 				//Guard against a guid appearing twice in `order`.
 				map[order[i]] = null;
 			}
 		}
 		return this.sortTasks(projected);
+	},
+
+	/* ---- Scrambling ------------------------------------------------------ */
+
+	//The notation, in the canonical form the scramble key is salted with.
+	scrambleMove: function() {
+		return CheckmateScramble.normalizeMove(this.$.myCheckmate.notation || "");
+	},
+	//Everything the view touches is plain text; the form it was STORED in rides
+	//	along in _storedTitle/_storedNotes. Both server truth and the replayed op
+	//	log land here, so there is exactly one place where a task stops being
+	//	opaque -- and toWireTask() is the one place where it starts again.
+	toDisplayTask: function(task) {
+		var move = this.scrambleMove();
+		task._storedTitle = task.title;
+		task._storedNotes = task.notes;
+		task.title = CheckmateScramble.reveal(move, task.title);
+		task.notes = CheckmateScramble.reveal(move, task.notes);
+		return task;
+	},
+	//A task is only rewritten scrambled when the user edits its text. Ticking a
+	//	box, reordering or deleting sends the stored bytes back untouched, so an
+	//	old plaintext task stays plaintext until its owner actually changes it.
+	toStoredText: function(task, field) {
+		var stored = (field === "title") ? task._storedTitle : task._storedNotes;
+		if (stored !== undefined && stored !== null) {
+			return stored;
+		}
+		return task[field] || "";
+	},
+	//Escape before anything reaches a control with allowHtml set. The service
+	//	used to escape on the way in, which is what made every save add another
+	//	layer of &amp;; it stores raw text now and escaping belongs here.
+	escapeHtml: function(text) {
+		if (text === null || text === undefined) {
+			return "";
+		}
+		return String(text)
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;")
+			.replace(/'/g, "&#39;");
 	},
 	refreshProjection: function() {
 		var next = this.projectTasks(this.serverTasks, this.$.myCheckmate.getPendingOps());
@@ -361,8 +404,8 @@ enyo.kind({
 	toWireTask: function(task) {
 		return {
 			guid: task.guid,
-			title: task.title,
-			notes: task.notes || "",
+			title: this.toStoredText(task, "title"),
+			notes: this.toStoredText(task, "notes"),
 			completed: !!task.completed,
 			sortPosition: task.sortPosition
 		};
@@ -463,7 +506,7 @@ enyo.kind({
 		}
 		else {
 			this.$.tasklistItem.removeClass("itemDeleting");
-			this.$.taskTitle.setContent(data.title);
+			this.$.taskTitle.setContent(this.escapeHtml(data.title));
 		}
 		this.$.taskCheck.setValue(!!data.completed);
 	},
@@ -510,7 +553,7 @@ enyo.kind({
 		if (this.$.taskDetails.inEdit) {
 			return;
 		}
-		this.$.reorderTitle.setContent(data.title);
+		this.$.reorderTitle.setContent(this.escapeHtml(data.title));
 		return true;
 	},
 	listReorderDone: function(inSender, inEvent) {
@@ -635,6 +678,10 @@ enyo.kind({
 			return true;
 		}
 
+		//The user changed the text, so this is the moment a task becomes
+		//	scrambled -- on create, and on the first edit of an old plaintext one.
+		var move = this.scrambleMove();
+
 		if (existing) {
 			//The service rejects an empty title outright, which would dead-letter
 			//	the op. Refuse it here where we can actually tell the user.
@@ -643,16 +690,16 @@ enyo.kind({
 				return true;
 			}
 			var edited = this.toWireTask(existing);
-			edited.title = title;
-			edited.notes = notes;
+			edited.title = CheckmateScramble.scramble(move, title);
+			edited.notes = CheckmateScramble.scramble(move, notes);
 			this.selectedTask = null;
 			this.$.myCheckmate.updateTask(edited);
 		}
 		else if (title && title !== "") {
 			this.$.myCheckmate.updateTask({
 				guid: this.generateGuid(),
-				title: title,
-				notes: notes || "",
+				title: CheckmateScramble.scramble(move, title),
+				notes: CheckmateScramble.scramble(move, notes || ""),
 				completed: false,
 				sortPosition: this.nextSortPosition()
 			});
@@ -727,7 +774,7 @@ enyo.kind({
 		//	lost: say which task, and what happened to it.
 		var label = "A change could not be saved.";
 		if (op && op.task && op.task.title) {
-			label = "\"" + op.task.title + "\" could not be saved.";
+			label = "\"" + this.escapeHtml(CheckmateScramble.reveal(this.scrambleMove(), op.task.title)) + "\" could not be saved.";
 		}
 		this.errorCount++;
 		this.refreshProjection();

@@ -121,6 +121,8 @@ function load(rel) {
         global.enyo, global.window, global.localStorage, global.Prefs,
         global.setTimeout, global.clearTimeout, global.Date, global.navigator);
 }
+global.CheckmateScramble = require(path.join(ROOT, 'enyo-app/source/api/scramble.js'));
+
 load('enyo-app/source/api/checkmate.js');
 load('enyo-app/source/api/version.js');
 load('enyo-app/source/views/main.js');
@@ -194,6 +196,11 @@ function titles(list) {
 function byGuid(list, guid) {
     for (var i = 0; i < list.length; i++) { if (list[i].guid === guid) { return list[i]; } }
     return null;
+}
+// Task text goes over the wire scrambled, so anything asserting on an op's
+// payload has to read it the way the service's other clients do.
+function wireText(view, text) {
+    return CheckmateScramble.reveal(view.scrambleMove(), text);
 }
 
 /* ================= TRACE A ================= */
@@ -536,8 +543,8 @@ section('about:version build report');
     ok('note names the display mode', note.indexOf('Display mode:') !== -1, note);
     ok('note is within the 1000 char server limit', note.length <= 1000, note.length);
 
-    // the service rejects nothing here, but strip_tags() would silently eat
-    // anything angle-bracketed, so it must never reach the wire
+    // build metadata is machine-generated and lands in a field the app renders,
+    // so keep markup out of it at the source
     ok('angle brackets are stripped', BuildInfo.sanitize('a <b> c').indexOf('<') === -1);
     ok('over-long values are truncated', BuildInfo.sanitize(new Array(500).join('x')).length <= 220);
 
@@ -558,9 +565,9 @@ section('about:version build report');
     v.updateTaskFromDetails();
     var ops = api.getPendingOps();
     ok('the magic title still creates a real task', ops.length === 1);
-    ok('  notes replaced with the build report', ops[0].task.notes.indexOf('2.3.0-0007') !== -1,
-       ops[0].task.notes);
-    ok('  title kept verbatim', ops[0].task.title === 'about:version');
+    ok('  notes replaced with the build report', wireText(v, ops[0].task.notes).indexOf('2.3.0-0007') !== -1,
+       wireText(v, ops[0].task.notes));
+    ok('  title kept verbatim', wireText(v, ops[0].task.title) === 'about:version');
 
     // a normal task is untouched
     resetWorld(); var api2 = makeApi(); var v2 = makeView(api2);
@@ -568,8 +575,8 @@ section('about:version build report');
     v2.$.contentPanels = {setIndex: function () {}};
     v2.$.taskDetails = {taskTitle: 'about:versions', taskNotes: 'my notes', inEdit: false, taskGuid: ''};
     v2.updateTaskFromDetails();
-    ok('a near-miss title is left alone', api2.getPendingOps()[0].task.notes === 'my notes',
-       api2.getPendingOps()[0].task.notes);
+    ok('a near-miss title is left alone', wireText(v2, api2.getPendingOps()[0].task.notes) === 'my notes',
+       wireText(v2, api2.getPendingOps()[0].task.notes));
 
     // re-saving an existing one refreshes the reading
     resetWorld(); var api3 = makeApi(); var v3 = makeView(api3);
@@ -581,10 +588,108 @@ section('about:version build report');
     v3.$.contentPanels = {setIndex: function () {}};
     v3.$.taskDetails = {taskTitle: 'about:version', taskNotes: 'stale', inEdit: false, taskGuid: 'Z'};
     v3.updateTaskFromDetails();
-    ok('re-saving refreshes the reading', api3.getPendingOps()[0].task.notes.indexOf('2.3.0-0009') !== -1,
-       api3.getPendingOps()[0].task.notes);
+    ok('re-saving refreshes the reading', wireText(v3, api3.getPendingOps()[0].task.notes).indexOf('2.3.0-0009') !== -1,
+       wireText(v3, api3.getPendingOps()[0].task.notes));
 
     BuildInfo.stamp = realStamp;
+})();
+
+/* ================= SCRAMBLING ================= */
+section('Scrambled at rest');
+(function () {
+    resetWorld(); var api = makeApi(); var v = makeView(api);
+    var move = v.scrambleMove();
+
+    // A user who has been here for years has plaintext tasks. They must read
+    // normally, and they must NOT be rewritten by anything but a real edit.
+    var plain = task('P', 'Old plaintext task', 5);
+    plain.notes = 'old notes';
+    var scrambled = task('S', CheckmateScramble.scramble(move, 'Hidden task'), 4);
+    scrambled.notes = CheckmateScramble.scramble(move, 'Hidden notes');
+    v.serverTasks = [plain, scrambled];
+    v.refreshProjection();
+
+    ok('plaintext task reads as itself', byGuid(v.viewTasks, 'P').title === 'Old plaintext task');
+    ok('scrambled task is revealed for display', byGuid(v.viewTasks, 'S').title === 'Hidden task');
+    ok('  including its notes', byGuid(v.viewTasks, 'S').notes === 'Hidden notes');
+    ok('the blob never reaches the view layer as the title',
+       byGuid(v.viewTasks, 'S').title.indexOf('cm1:') === -1);
+
+    // Ticking a box is not an edit: both tasks must go back byte-identical.
+    var toggled = v.toWireTask(byGuid(v.viewTasks, 'P'));
+    toggled.completed = true;
+    api.updateTask(toggled);
+    ok('a toggle leaves plaintext plaintext', api.getPendingOps()[0].task.title === 'Old plaintext task');
+
+    resetWorld(); var api2 = makeApi(); var v2 = makeView(api2);
+    v2.serverTasks = [scrambled]; v2.refreshProjection();
+    var toggled2 = v2.toWireTask(byGuid(v2.viewTasks, 'S'));
+    toggled2.completed = true;
+    api2.updateTask(toggled2);
+    ok('a toggle re-sends the original blob unchanged',
+       api2.getPendingOps()[0].task.title === scrambled.title);
+
+    // A reorder is not an edit either.
+    resetWorld(); var api3 = makeApi(); var v3 = makeView(api3);
+    v3.serverTasks = [task('P', 'Old plaintext task', 5), scrambled];
+    v3.refreshProjection();
+    v3.$.taskDetails = {inEdit: false, taskGuid: '', render: function () {}, reset: function () {}};
+    v3.listReorderDone(null, {reorderFrom: 0, reorderTo: 1});
+    var batch = api3.getPendingOps()[0].task;
+    var sentTitles = [batch[0].title, batch[1].title].sort().join('|');
+    ok('a reorder rewrites no task text',
+       sentTitles === ['Old plaintext task', scrambled.title].sort().join('|'), sentTitles);
+
+    // Editing IS the moment a task becomes scrambled.
+    resetWorld(); var api4 = makeApi(); var v4 = makeView(api4);
+    v4.serverTasks = [task('P', 'Old plaintext task', 5)];
+    v4.refreshProjection();
+    v4.selectedTask = byGuid(v4.viewTasks, 'P');
+    v4.$.contentPanels = {setIndex: function () {}};
+    v4.$.taskDetails = {taskTitle: 'Now edited', taskNotes: 'now with notes', inEdit: false, taskGuid: 'P'};
+    v4.updateTaskFromDetails();
+    var edited = api4.getPendingOps()[0].task;
+    ok('editing scrambles the title', CheckmateScramble.isScrambled(edited.title));
+    ok('  and the notes', CheckmateScramble.isScrambled(edited.notes));
+    ok('  and it still says what the user typed', wireText(v4, edited.title) === 'Now edited');
+
+    // New tasks are born scrambled.
+    resetWorld(); var api5 = makeApi(); var v5 = makeView(api5);
+    v5.serverTasks = []; v5.refreshProjection();
+    v5.$.contentPanels = {setIndex: function () {}};
+    v5.$.taskDetails = {taskTitle: 'Brand new', taskNotes: '', inEdit: false, taskGuid: ''};
+    v5.updateTaskFromDetails();
+    ok('a new task is created scrambled', CheckmateScramble.isScrambled(api5.getPendingOps()[0].task.title));
+
+    // Text the old service would have mangled must survive a full round trip.
+    resetWorld(); var api6 = makeApi(); var v6 = makeView(api6);
+    v6.serverTasks = []; v6.refreshProjection();
+    v6.$.contentPanels = {setIndex: function () {}};
+    v6.$.taskDetails = {taskTitle: 'Tom & Jerry: 5 < 6', taskNotes: '', inEdit: false, taskGuid: ''};
+    v6.updateTaskFromDetails();
+    var born = api6.getPendingOps()[0].task;
+    ok('ampersands and angle brackets survive the wire',
+       wireText(v6, born.title) === 'Tom & Jerry: 5 < 6', wireText(v6, born.title));
+    // ...and come back out of a refresh intact
+    v6.serverTasks = [{guid: born.guid, title: born.title, notes: born.notes,
+                       completed: false, sortPosition: born.sortPosition}];
+    api6.clearQueue();
+    v6.refreshProjection();
+    ok('  and read back intact after a refresh',
+       byGuid(v6.viewTasks, born.guid).title === 'Tom & Jerry: 5 < 6');
+
+    // Anything reaching an allowHtml control has to be escaped by the app now
+    // that the service stores raw text.
+    ok('markup is escaped before it is rendered',
+       v6.escapeHtml('<script>x</script> & "q"') === '&lt;script&gt;x&lt;/script&gt; &amp; &quot;q&quot;',
+       v6.escapeHtml('<script>x</script> & "q"'));
+
+    // A blob we cannot read (wrong notation, truncated file) must still show
+    // the user that a row is there rather than rendering an empty task.
+    resetWorld(); var api7 = makeApi(); var v7 = makeView(api7);
+    v7.serverTasks = [task('X', 'cm1:notreallybase64!!', 1)];
+    v7.refreshProjection();
+    ok('an unreadable blob is left visible', byGuid(v7.viewTasks, 'X').title === 'cm1:notreallybase64!!');
 })();
 
 console.log('\n========================================');
