@@ -134,27 +134,47 @@ enyo.kind({
 	checkboxChanged: function() {
 		this.$.inputCustomServer.setDisabled(false);
 	},
-	//The row appears only on a webOS device that is actually signed in to an
-	//	account. Asking the user to tick a box that then fails is worse than not
-	//	offering it, so the check is a real connection attempt, not just "are we
-	//	on webOS".
+	//Shown on any webOS device, and only ticked once we have actually reached the
+	//	account. It used to hide itself whenever connecting failed, which meant a
+	//	device that could not use the feature was indistinguishable from a device
+	//	where the feature does not exist -- nothing appeared, and there was no way
+	//	to tell why from the device itself. Now the row says.
 	offerAccountSave: function() {
 		if (typeof CheckmateAccount === "undefined" || !CheckmateAccount.isSupported()) {
 			return;
 		}
 		var self = this;
+		this.$.checkSaveToAccount.setDisabled(true);
+		this.$.textSaveToAccount.setContent("Checking your webOS Account...");
+		this.$.rowSaveToAccount.setShowing(true);
+		this.$.textSaveToAccountHint.setShowing(true);
+
 		CheckmateAccount.connect(function(err) {
 			if (err) {
-				enyo.log("No webOS Account available: " + CheckmateAccount.describeError(err));
+				self.accountSaveUnavailable(err);
 				return;
 			}
 			self.accountAvailable = true;
+			self.$.checkSaveToAccount.setDisabled(false);
 			var name = CheckmateAccount.accountName();
-			if (name) {
-				self.$.textSaveToAccount.setContent("Save my credentials to my webOS Account (" + name + ")");
-			}
-			self.$.rowSaveToAccount.setShowing(true);
-			self.$.textSaveToAccountHint.setShowing(true);
+			self.$.textSaveToAccount.setContent(name
+				? "Save my credentials to my webOS Account (" + name + ")"
+				: "Save my credentials to my webOS Account");
+			self.$.textSaveToAccountHint.setContent("Then any webOS device signed in to the same account picks up this list without asking you to log in.");
+		});
+	},
+	//Ask the account service directly for its own words. "No account signed in"
+	//	and "this app may not ask" both arrive as the same SDK error, and only the
+	//	device can tell us which it is.
+	accountSaveUnavailable: function(err) {
+		var self = this;
+		this.accountAvailable = false;
+		this.$.checkSaveToAccount.setDisabled(true);
+		this.$.textSaveToAccount.setContent("Can't use your webOS Account here");
+		this.$.textSaveToAccountHint.setContent(CheckmateAccount.describeError(err));
+		CheckmateAccount.diagnose(function(detail) {
+			self.$.textSaveToAccountHint.setContent(CheckmateAccount.describeError(err) +
+				" (the account service said: " + self.escapeHtml(detail) + ")");
 		});
 	},
 	//The label is a far bigger touch target than the box, which matters on a

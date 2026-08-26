@@ -39,11 +39,49 @@
 	var store = null;
 	var connected = false;
 
-	//webOS, of any vintage. PalmServiceBridge is the one that matters: it is
-	//	what useDeviceAccount() talks to the account service over. Absent in a
-	//	browser and in the Cordova build, where this whole feature stays hidden.
+	//Are we on webOS at all? PalmSystem is the signal the rest of this app uses
+	//	(see api/updater.js) and it is present on every webOS build; the service
+	//	bridge is a separate question, answered below. Absent in a browser and in
+	//	the Cordova build, where this whole feature stays hidden.
 	function isSupported() {
+		return typeof global.PalmSystem !== "undefined" ||
+			typeof global.PalmServiceBridge !== "undefined";
+	}
+
+	//Being on webOS is not the same as being able to reach the account service.
+	//	Keeping these apart is what lets the UI say "here is why" instead of
+	//	quietly showing nothing at all.
+	function hasServiceBus() {
 		return typeof global.PalmServiceBridge !== "undefined";
+	}
+
+	/**
+	 * Ask the account service directly and hand back whatever it actually says.
+	 *
+	 * Only used when connect() has already failed, to put the device's own words
+	 * in front of the user -- "no account" and "this app may not ask" are very
+	 * different problems and the SDK reports both as no_device_account.
+	 * cb(text) with a short human-readable description.
+	 */
+	function diagnose(cb) {
+		if (!hasServiceBus()) {
+			return cb("no PalmServiceBridge on this device");
+		}
+		var answered = false;
+		function answer(text) {
+			if (!answered) { answered = true; cb(text); }
+		}
+		try {
+			var bridge = new global.PalmServiceBridge();
+			bridge.onservicecallback = function (msg) {
+				answer(String(msg).slice(0, 300));
+			};
+			bridge.call("palm://com.palm.accountservices/getAccountToken", "{}");
+			//A denied call can simply never come back.
+			global.setTimeout(function () { answer("the account service did not answer"); }, 8000);
+		} catch (e) {
+			answer("the account service could not be called: " + String(e));
+		}
 	}
 
 	function getStore() {
@@ -72,8 +110,8 @@
 	 */
 	function connect(cb) {
 		var s = getStore();
-		if (!isSupported() || !s) {
-			return cb({code: "unsupported", message: "This device has no webOS Account service."});
+		if (!hasServiceBus() || !s) {
+			return cb({code: "no_palm_bus", message: "This device has no webOS Account service."});
 		}
 		if (s.isSignedIn() && connected) {
 			return cb(null);
@@ -185,6 +223,8 @@
 		appId: APP_ID,
 		credentialKey: CREDENTIAL_KEY,
 		isSupported: isSupported,
+		hasServiceBus: hasServiceBus,
+		diagnose: diagnose,
 		isConnected: isConnected,
 		connect: connect,
 		load: load,
