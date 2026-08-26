@@ -7,9 +7,10 @@
  * public. It only stops a casual reader of a notation file from seeing what is
  * on someone's to-do list.
  *
- * Ported verbatim to PHP (checkmate-service/scramble.php) and Python
- * (checkmate-cli/checkmate.py). test/scramble-conformance.sh checks all three
- * agree, byte for byte.
+ * Ported to PHP (checkmate-service/scramble.php) and Python
+ * (checkmate-cli/checkmate.py). Each repo carries the same
+ * test/scramble-vectors.json and its own test/scramble-test.*, so all four
+ * clients are checked to agree byte for byte.
  *
  * Every client reads BOTH formats forever — users have plaintext tasks stored
  * from before this existed. Only content the user actually edits is written
