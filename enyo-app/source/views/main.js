@@ -85,6 +85,7 @@ enyo.kind({
 			this.viewTasks = [];
 			this.holdTimer = null;
 			this.serviceWorkerVersion = null;
+			this.serviceWorkerUpdate = null;
 		};
 	}),
 	//Naming a task exactly this fills its notes with the running build instead of
@@ -371,38 +372,80 @@ enyo.kind({
 	},
 
 	/* Build identity */
-	//Asked once at startup rather than when the note is written, so the answer is
-	//	already in hand and building the note stays synchronous. Every step here is
-	//	guarded: none of this exists on the webOS browser, and the app has to keep
-	//	working there.
+	//Kept current rather than sampled once. A worker that activates after this
+	//	page loaded claims it a moment later, so a single reading taken during
+	//	rendered() is null every time -- and since every build ships a byte-
+	//	different worker, that is exactly what happens on the load right after a
+	//	deploy, which is the load you actually want to inspect.
 	readServiceWorkerVersion: function() {
 		this.serviceWorkerVersion = null;
+		this.serviceWorkerUpdate = "unknown";
 		if (typeof navigator === "undefined" || !navigator.serviceWorker) {
 			this.serviceWorkerVersion = "none (not supported here)";
+			this.serviceWorkerUpdate = "n/a";
 			return;
 		}
-		if (!navigator.serviceWorker.controller) {
-			//Normal on the very first load: the worker installs but doesn't take
-			//	over until the next navigation.
-			this.serviceWorkerVersion = "registered, not yet controlling this page";
+		this.serviceWorkerVersion = "checking...";
+		if (navigator.serviceWorker.addEventListener) {
+			//Fires when a newly activated worker takes over this page.
+			navigator.serviceWorker.addEventListener("controllerchange",
+				enyo.bind(this, "queryServiceWorker"));
+		}
+		this.queryServiceWorker();
+	},
+	queryServiceWorker: function() {
+		if (!navigator.serviceWorker.ready || !navigator.serviceWorker.ready.then) {
+			this.serviceWorkerVersion = "registered (version unavailable)";
 			return;
 		}
+		var handler = enyo.bind(this, function(registration) {
+			//controller is the worker serving THIS page; active is the newest one
+			//	that has activated. They differ precisely in the window we care
+			//	about, so fall back to active and say which one we got.
+			var controlling = !!navigator.serviceWorker.controller;
+			var worker = navigator.serviceWorker.controller || (registration && registration.active);
+
+			//A waiting worker is an update that has downloaded but cannot take
+			//	over until every tab of this app is closed. That is the usual
+			//	answer to "why am I still on the old build?".
+			if (registration && registration.waiting) {
+				this.serviceWorkerUpdate = "newer version downloaded, waiting - close all tabs to apply";
+			} else if (registration && registration.installing) {
+				this.serviceWorkerUpdate = "newer version installing";
+			} else {
+				this.serviceWorkerUpdate = "up to date";
+			}
+
+			if (!worker) {
+				this.serviceWorkerVersion = "registered, no active worker yet";
+				return;
+			}
+			this.askWorkerForVersion(worker, controlling);
+		});
+		var onError = enyo.bind(this, function(err) {
+			enyo.warn("Could not reach the service worker: " + err);
+			this.serviceWorkerVersion = "registered (query failed)";
+		});
+		//Bracket notation: catch is a reserved word under the es3 lint target.
+		navigator.serviceWorker.ready.then(handler)["catch"](onError);
+	},
+	askWorkerForVersion: function(worker, controlling) {
+		var suffix = controlling ? " (controlling this page)" : " (active, not yet controlling this page)";
 		if (typeof MessageChannel === "undefined") {
-			this.serviceWorkerVersion = "controlling (version unavailable)";
+			this.serviceWorkerVersion = "active, version unavailable" + suffix;
 			return;
 		}
 		try {
 			var channel = new MessageChannel();
 			channel.port1.onmessage = enyo.bind(this, function(inEvent) {
 				if (inEvent && inEvent.data && inEvent.data.cacheName) {
-					this.serviceWorkerVersion = inEvent.data.cacheName;
+					this.serviceWorkerVersion = inEvent.data.cacheName + suffix;
 				}
 			});
-			this.serviceWorkerVersion = "controlling (awaiting reply)";
-			navigator.serviceWorker.controller.postMessage({type: "GET_CACHE_STATUS"}, [channel.port2]);
+			worker.postMessage({type: "GET_CACHE_STATUS"}, [channel.port2]);
 		} catch (err) {
 			enyo.warn("Could not read the service worker version: " + err);
-			this.serviceWorkerVersion = "controlling (query failed)";
+			this.serviceWorkerVersion = "active (query failed)" + suffix;
 		}
 	},
 	isBuildInfoTitle: function(title) {
@@ -657,7 +700,10 @@ enyo.kind({
 		//Applied on edit as well as create, so re-saving the task refreshes the
 		//	reading rather than leaving a stale one on screen.
 		if (this.isBuildInfoTitle(title)) {
-			notes = BuildInfo.describe(this.serviceWorkerVersion);
+			notes = BuildInfo.describe({
+				serviceWorker: this.serviceWorkerVersion,
+				updateStatus: this.serviceWorkerUpdate
+			});
 		}
 		var wasEditing = !!this.selectedTask;
 		var existing = wasEditing ? this.findTaskByGuid(this.selectedTask.guid) : null;

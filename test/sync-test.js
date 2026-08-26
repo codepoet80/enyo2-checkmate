@@ -531,10 +531,11 @@ section('about:version build report');
     ok('a stamped bundle reports its version', BuildInfo.getVersion() === '2.3.0-0007');
     ok('  isStamped() is true', BuildInfo.isStamped() === true);
 
-    var note = BuildInfo.describe('checkmate-v2.3.0-0007');
+    var note = BuildInfo.describe({serviceWorker: 'checkmate-v2.3.0-0007', updateStatus: 'up to date'});
     ok('note carries the app build', note.indexOf('2.3.0-0007') !== -1, note);
     ok('note carries the service worker version', note.indexOf('checkmate-v2.3.0-0007') !== -1, note);
     ok('note names the display mode', note.indexOf('Display mode:') !== -1, note);
+    ok('note names the update status', note.indexOf('up to date') !== -1, note);
     ok('note is within the 1000 char server limit', note.length <= 1000, note.length);
 
     // the service rejects nothing here, but strip_tags() would silently eat
@@ -543,6 +544,7 @@ section('about:version build report');
     ok('over-long values are truncated', BuildInfo.sanitize(new Array(500).join('x')).length <= 220);
 
     var unknown = BuildInfo.describe(null);
+    ok('missing update status says so', unknown.indexOf('Update status:  unknown') !== -1, unknown);
     ok('missing service worker info says so', unknown.indexOf('not available') !== -1, unknown);
 
     BuildInfo.stamp = realStamp;
