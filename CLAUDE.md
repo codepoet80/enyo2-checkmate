@@ -13,8 +13,9 @@ The project uses a custom shell-based build system with platform-specific target
 - **Build for multiple platforms**: `./build.sh webos www android`
 - **Build for specific platform**: `./build.sh webos` (or `luneos`, `www`, `web`, `android`)
 - **Clean build artifacts**: `./build.sh clean`
-- **Development server**: `grunt serve` (runs on port 8282)
-- **Lint code**: `grunt jshint`
+- **Development server**: `python3 -m http.server 8282 --directory bin/www` (after `./build.sh www`)
+- **Lint code**: `npx jshint --config .jshintrc enyo-app/source`
+- **Run tests**: `node test/sync-test.js`
 
 Additional build flags:
 - `--release`: Build release version for mobile platforms
@@ -190,7 +191,7 @@ enyo.kind({
 ## Development Workflow
 
 1. Make changes in `enyo-app/source/`
-2. Test with `grunt serve` for web development
+2. Run `node test/sync-test.js` to check the sync logic
 3. Build with `./build.sh www` for quick web testing
 4. Build platform-specific versions as needed
 5. Check output in `bin/` directory
