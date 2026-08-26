@@ -229,10 +229,68 @@ function serverConfig() {
 			CheckmateAccount.load(function (err, creds) {
 				// Credentials alone don't identify a self-hosted list; without
 				// this a second device would auto-log-in against the wrong one.
+				//Canonical names now: account-model.js owns the shape, because both
+				//	clients read this same record.
 				ok("the self-host server comes back", creds.server &&
-					creds.server.customServer === "lan.example.test:8080", creds.server);
+					creds.server.customUrl === "lan.example.test:8080", creds.server);
 				ok("  and so does the insecure flag", creds.server.insecure === true);
 
+				// The two clients describe a server differently, and they read the
+				// SAME record. Enyo writing its dialect and Mojo reading it (or
+				// the reverse) is not a hypothetical: it left the Enyo client
+				// setting its base URL to undefined and spinning forever.
+				resetWorld();
+				CheckmateAccount.connect(function () {
+					// What the Mojo client writes.
+					CheckmateAccount.save({
+						move: CREDS.move, grandmaster: CREDS.grandmaster,
+						server: {useCustom: true, customUrl: "http://lan.example.test:8080"}
+					}, function () {
+						CheckmateAccount.load(function (err, mojoWritten) {
+							ok("a Mojo-written record has every field the Enyo client needs", true,
+								mojoWritten.server.urlBase !== undefined &&
+								mojoWritten.server.insecure !== undefined &&
+								mojoWritten.server.useCustom === true, mojoWritten.server);
+							ok("  and keeps the custom URL", "http://lan.example.test:8080",
+								mojoWritten.server.customUrl);
+
+							// And the old dialects, which are already on real accounts.
+							resetWorld();
+							CheckmateAccount.connect(function () {
+								server.records[CheckmateAccount.credentialKey] =
+									WebOSAppStorage.scramble(CheckmateAccount.appId, CheckmateAccount.credentialKey,
+										JSON.stringify({move: CREDS.move, grandmaster: CREDS.grandmaster,
+											server: {useCustomEndpoint: true, endpointURL: "http://old.example.test"}}));
+								CheckmateAccount.load(function (err, legacy) {
+									ok("a record in the old Mojo dialect still reads", true, legacy.server.useCustom === true);
+									ok("  with its URL intact", "http://old.example.test", legacy.server.customUrl);
+
+									resetWorld();
+									CheckmateAccount.connect(function () {
+										server.records[CheckmateAccount.credentialKey] =
+											WebOSAppStorage.scramble(CheckmateAccount.appId, CheckmateAccount.credentialKey,
+												JSON.stringify({move: CREDS.move, grandmaster: CREDS.grandmaster,
+													server: {useCustomServer: true, customServer: "old.enyo.test", urlBase: "checkmate.wosa.link", insecure: true}}));
+										CheckmateAccount.load(function (err, legacy2) {
+											ok("a record in the old Enyo dialect still reads", true, legacy2.server.useCustom === true);
+											ok("  with its URL intact", "old.enyo.test", legacy2.server.customUrl);
+											ok("  and its base host", "checkmate.wosa.link", legacy2.server.urlBase);
+											noServerRecord();
+										});
+									});
+								});
+							});
+						});
+					});
+				});
+			});
+		});
+	});
+}
+
+function noServerRecord() {
+	section("A record with no server settings");
+	(function () {
 				// Records written before this carry no server at all.
 				resetWorld();
 				CheckmateAccount.connect(function () {
@@ -244,9 +302,7 @@ function serverConfig() {
 						});
 					});
 				});
-			});
-		});
-	});
+	}());
 }
 
 /* ================= A REVOKED SIGN-IN ================= */

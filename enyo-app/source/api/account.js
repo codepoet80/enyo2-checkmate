@@ -163,6 +163,31 @@
 		});
 	}
 
+	//ONE shape for the server settings, whichever client wrote them.
+	//
+	//	Both clients read the same record, but they describe a server differently:
+	//	Enyo has a default host plus an insecure flag plus a self-host override,
+	//	Mojo has only "use a custom endpoint" and its URL. Writing each client's
+	//	own dialect into a shared record meant Enyo read a Mojo record, found a
+	//	server object with no urlBase in it, and set its base URL to undefined --
+	//	which threw on the first request and left the app spinning forever.
+	//
+	//	Both dialects are accepted on the way in and canonicalised, so records
+	//	written before this still read correctly.
+	function normalizeServer(server) {
+		if (!server) {
+			return null;
+		}
+		return {
+			useCustom: !!(server.useCustom || server.useCustomEndpoint || server.useCustomServer),
+			customUrl: server.customUrl || server.endpointURL || server.customServer || "",
+			//Only Enyo has these; Mojo's default host is fixed in its service model,
+			//	so it leaves them empty and ignores them on the way back out.
+			urlBase: server.urlBase || "",
+			insecure: !!server.insecure
+		};
+	}
+
 	/** cb(err, credentials) — credentials is null when the account holds none. */
 	function load(cb) {
 		var s = getStore();
@@ -183,7 +208,7 @@
 				//	against the shared service and fail. Absent for records written
 				//	before this, and for anyone on the default server.
 				done(null, {move: value.move, grandmaster: value.grandmaster,
-					server: value.server || null});
+					server: normalizeServer(value.server)});
 			});
 		}, cb);
 	}
@@ -196,8 +221,9 @@
 			return cb({code: "invalid", message: "Both a move and a grandmaster are needed."});
 		}
 		var value = {move: credentials.move, grandmaster: credentials.grandmaster};
-		if (credentials.server) {
-			value.server = credentials.server;
+		var server = normalizeServer(credentials.server);
+		if (server) {
+			value.server = server;
 		}
 		withRetry(function (done) {
 			s.set(CREDENTIAL_KEY, value, function (err) { done(err || null); });

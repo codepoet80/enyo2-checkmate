@@ -510,10 +510,7 @@ enyo.kind({
 		//	because credentials alone don't identify a self-hosted list -- a
 		//	second device would auto-log-in against the wrong server. Falls back
 		//	to whatever this device already had, then to the defaults.
-		var config = saved.server || Prefs.getCookie("serverConfig", null) || {
-			urlBase: this.$.myCheckmate.getUrlBase(), insecure: false,
-			useCustomServer: false, customServer: ""
-		};
+		var config = this.configFromAccount(saved.server);
 		this.serverConfig = config;
 		Prefs.setCookie("serverConfig", config);
 		this.applyServerConfig(config);
@@ -540,6 +537,29 @@ enyo.kind({
 		this.setLoginButton("credentials");
 		this.refreshProjection();
 		this.loadTaskList();
+	},
+	//Map the account's canonical server record onto this client's own settings,
+	//	falling back to whatever this device already had and then to the defaults.
+	//	Every field is defaulted: a record written by the Mojo client carries no
+	//	urlBase at all, and setting the base URL to undefined threw on the first
+	//	request and left the app spinning forever.
+	configFromAccount: function(server) {
+		var current = Prefs.getCookie("serverConfig", null) || {};
+		var fallbackBase = current.urlBase || this.$.myCheckmate.getUrlBase();
+		if (!server) {
+			return {
+				urlBase: fallbackBase,
+				insecure: !!current.insecure,
+				useCustomServer: !!current.useCustomServer,
+				customServer: current.customServer || ""
+			};
+		}
+		return {
+			urlBase: server.urlBase || fallbackBase,
+			insecure: !!server.insecure,
+			useCustomServer: !!server.useCustom,
+			customServer: server.customUrl || ""
+		};
 	},
 	showCredentials: function() {
 		var newComponent = this.$.contentPanels.createComponent({
@@ -629,7 +649,11 @@ enyo.kind({
 		if (!config) {
 			return;
 		}
-		this.$.myCheckmate.setUrlBase(config.urlBase);
+		//Never let a missing base URL through: buildURL() calls indexOf on it, so
+		//	an undefined here is an exception on every request from then on.
+		if (config.urlBase) {
+			this.$.myCheckmate.setUrlBase(config.urlBase);
+		}
 		this.$.myCheckmate.setInsecure(config.insecure);
 		this.$.myCheckmate.setUseCustomServer(config.useCustomServer);
 		this.$.myCheckmate.setCustomServer(config.customServer);

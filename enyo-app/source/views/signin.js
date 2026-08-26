@@ -237,10 +237,10 @@ enyo.kind({
 			//applyServerConfig() has already pushed the drawer's current values
 			//	onto this panel, so these are what the user is logging in with.
 			server: {
+				useCustom: this.getUseCustomServer(),
+				customUrl: this.getCustomServer(),
 				urlBase: this.getUrlBase(),
-				insecure: this.getInsecure(),
-				useCustomServer: this.getUseCustomServer(),
-				customServer: this.getCustomServer()
+				insecure: this.getInsecure()
 			}
 		}, function(err) {
 			self.$.buttonLogin.setDisabled(false);
