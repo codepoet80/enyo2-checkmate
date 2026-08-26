@@ -38,19 +38,21 @@ enyo.kind({
         enyo.log("SoundPlayer created");
         try {
             window.AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.myAudioContext = new AudioContext();
+            this.myAudioContext = new window.AudioContext();
             //throw "Forced Enyo Audio Test";
             this.useWebAudio = true;
             this.setupAudioContextHandling();
         } catch (e) {
-            if (e == "Forced Enyo Audio Test")
+            if (e == "Forced Enyo Audio Test") {
                 enyo.log("Forcing Enyo audio for testing.");
-            else
+            } else {
                 enyo.warn("No Web Audio API support, using Enyo audio.");
+            }
             this.useWebAudio = false;
         }
-        if (this.sounds.length > 0)
+        if (this.sounds.length > 0) {
             this.loadSoundsAbstracted();
+        }
 	},
     loadSoundsAbstracted: function() {
         enyo.log("SoundPlayer loading " + this.sounds.length + " sounds on this: " + this.name);
@@ -61,10 +63,11 @@ enyo.kind({
             //Add a proxy to the parent
             this[this.sounds[i].name] = this.sounds[i];
         }
-        if (this.useWebAudio)
+        if (this.useWebAudio) {
             this.loadSoundsWebAudio();
-        else
+        } else {
             this.loadSoundsEnyo();
+        }
     },
     loadSoundsEnyo: function() {
         this.createComponents(this.sounds, {owner: this});
@@ -86,7 +89,7 @@ enyo.kind({
         }
     },
     enableAudioOnInteraction: function() {
-        if (this.interactionListenersAdded) return;
+        if (this.interactionListenersAdded) { return; }
         
         var self = this;
         var enableAudio = function() {
@@ -94,7 +97,7 @@ enyo.kind({
                 self.myAudioContext.resume().then(function() {
                     enyo.log("Audio context resumed after user interaction");
                     self.audioReady = true;
-                }).catch(function(err) {
+                })["catch"](function(err) {
                     enyo.warn("Failed to resume audio context: " + err);
                 });
             }
@@ -156,8 +159,9 @@ enyo.kind({
         this.SetSounds(soundsArray);
     },
     SetSounds: function(soundsArray) {
-        if (soundsArray)
+        if (soundsArray) {
             this.sounds = soundsArray;
+        }
         this.loadSoundsAbstracted();
     },
     Play: function() {
@@ -173,7 +177,7 @@ enyo.kind({
         return -1;
     },
     ensureAudioReady: function() {
-        if (!this.useWebAudio) return true;
+        if (!this.useWebAudio) { return true; }
         
         // Handle modern browser autoplay restrictions
         if (this.myAudioContext.state === 'suspended') {
@@ -247,5 +251,5 @@ enyo.kind({
         }
         enyo.error("Could not find Enyo Audio component with name: " + name);
         return false;
-    },
+    }
 });

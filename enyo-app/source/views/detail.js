@@ -7,7 +7,7 @@ enyo.kind({
 		taskGuid: "",
 		taskTitle: "",
 		taskNotes: "",
-		inEdit: false,
+		inEdit: false
 	},
 	events: {
 		onHideTaskDetails: "",
@@ -15,19 +15,19 @@ enyo.kind({
 	},
 	components: [
 		{kind: "onyx.Toolbar", name:"taskAction", classes:"detailToolbarTop", components: [
-            {name:"toolbarTitle", name:"taskDetailTitle", content:"Task Detail"},
-            {kind:"onyx.Grabber", classes: "responsiveGrabber", showing:true },
+            {name:"taskDetailTitle", content:"Task Detail"},
+            {kind:"onyx.Grabber", classes: "responsiveGrabber", showing:true }
         ]},
 		{kind: "enyo.Scroller", horizontal:"hidden", classes:"", fit:true, components:[
 			{name: "labelTaskTitle", classes:"taskDetailLabel", content: "Title"},
 			{kind: "checkmate.SpellCheckInput", name: "taskTitle", classes:"taskDetailEntry spell-check-input", singleLine: true, disabled: true, oninput: "inputOccurred"},
 			{name: "labeltaskNotes", classes:"taskDetailLabel", content: "Notes" },
-			{kind: "checkmate.SpellCheckInput", name: "taskNotes", classes:"taskDetailEntry taskDetailEntryBottom spell-check-input", disabled: true, oninput: "inputOccurred"},
+			{kind: "checkmate.SpellCheckInput", name: "taskNotes", classes:"taskDetailEntry taskDetailEntryBottom spell-check-input", disabled: true, oninput: "inputOccurred"}
 		]},
 		{kind: "onyx.Toolbar", layoutKind: "FittableColumnsLayout", classes: "detailToolbarBottom", noStretch: true, components: [
 			{kind: "onyx.Button", name: "taskEditCancel", content: "Edit", ontap: "editCancelTap"},
             {kind: 'onyx.Grabber', classes: "responsiveGrabber", showing:true},
-			{kind: "onyx.Button", name: "taskSave", classes:"buttonRight", content: "Save", ontap: "saveTap", showing:false },
+			{kind: "onyx.Button", name: "taskSave", classes:"buttonRight", content: "Save", ontap: "saveTap", showing:false }
 		]}
 	],
 	taskTitleChanged: function() {
@@ -46,10 +46,11 @@ enyo.kind({
 		if (this.inEdit) {
 			this.$.taskEditCancel.setContent("Cancel");
 		} else {
-			if (this.getTaskTitle() != "")
+			if (this.getTaskTitle() != "") {
 				this.$.taskEditCancel.setContent("Edit");
-			else
+			} else {
 				this.$.taskEditCancel.setContent("New");
+			}
 		}
 	},
 	reset: function() {

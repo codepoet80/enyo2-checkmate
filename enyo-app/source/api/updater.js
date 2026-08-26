@@ -17,7 +17,7 @@ enyo.kind({
     appInfo: "",
     updateServiceUrl: "http://appcatalog.webosarchive.org/WebService/getLatestVersionInfo.php?app=",
     events: {
-        onUpdateFound: "",
+        onUpdateFound: ""
     },
     published: {
         UpdateMessage: ""
@@ -38,7 +38,7 @@ enyo.kind({
                 method: "GET",
                 cacheBust: true
             });
-            request.error(function() { enyo.log("Updater helper hit an error loading app info. Unable to check for update!")});
+            request.error(function() { enyo.log("Updater helper hit an error loading app info. Unable to check for update!");});
             request.response(this.performIdentifiedUpdateCheck.bind(this));
             request.go();
         }
@@ -99,7 +99,7 @@ enyo.kind({
 
      //Turn a version string into an object with three independent number values
      getVersionObject: function(versionNum) {
-        versionNumParts = versionNum.split(".");
+        var versionNumParts = versionNum.split(".");
         if (versionNumParts.length <= 2 || versionNumParts > 3) {
             enyo.log("Updater Helper: An invalid version number was passed, webOS version numbers are #.#.#");
             return false;
@@ -108,7 +108,7 @@ enyo.kind({
                 majorVersion: versionNumParts[0] * 1,
                 minorVersion: versionNumParts[1] * 1,
                 buildVersion: versionNumParts[2] * 1
-            }
+            };
             return versionObject;
         }
     },
@@ -118,12 +118,15 @@ enyo.kind({
         if (!currVersion || !compareVersion) {
             enyo.log("Updater Helper: Pass the versions to compare. If the second version is higher than the first, this function will return true");
         } else {
-            if (compareVersion.majorVersion > currVersion.majorVersion)
+            if (compareVersion.majorVersion > currVersion.majorVersion) {
                 return true;
-            if (compareVersion.majorVersion == currVersion.majorVersion && compareVersion.minorVersion > currVersion.minorVersion)
+            }
+            if (compareVersion.majorVersion == currVersion.majorVersion && compareVersion.minorVersion > currVersion.minorVersion) {
                 return true;
-            if (compareVersion.majorVersion == currVersion.majorVersion && compareVersion.minorVersion == currVersion.minorVersion && compareVersion.buildVersion > currVersion.buildVersion)
+            }
+            if (compareVersion.majorVersion == currVersion.majorVersion && compareVersion.minorVersion == currVersion.minorVersion && compareVersion.buildVersion > currVersion.buildVersion) {
                 return true;
+            }
             return false;
         }
     },
