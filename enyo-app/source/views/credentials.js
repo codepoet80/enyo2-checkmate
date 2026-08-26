@@ -31,7 +31,7 @@ enyo.kind({
 		]},
 		{kind: "enyo.Scroller", horizontal:"hidden", fit:true, components:[
 			{classes:"spacer"},
-			{name: "textAccount", classes:"finePrint", content: ""},
+			{name: "textAccount", classes:"credentialNote", content: ""},
 
 			{name: "labelMove", classes:"taskDetailLabel", content: "Your Move:"},
 			{name: "textMove", classes:"taskDetailLabel credentialValue", content: ""},
@@ -46,9 +46,9 @@ enyo.kind({
 			{name: "textGrandmaster", classes:"taskDetailLabel credentialValue", ontap: "toggleReveal", content: ""},
 
 			{classes:"spacer"},
-			{classes:"finePrint", content: "These are saved to your webOS Account, so any webOS device you sign in on picks up this list without asking you to log in again."},
+			{classes:"credentialNote", content: "These are saved to your webOS Account, so any webOS device you sign in on picks up this list without asking you to log in again."},
 			{classes:"spacer"},
-			{classes:"finePrint", content: "Forgetting them clears this device and your webOS Account together. Your tasks are not touched, but you will need your move and grandmaster to get back in -- so write them down first."},
+			{classes:"credentialNote", content: "Forgetting them clears this device and your webOS Account together. Your tasks are not touched, but you will need your move and grandmaster to get back in -- so write them down first."},
 			{classes:"spacer"}
 		]},
 		{kind: "onyx.Toolbar", layoutKind: "FittableColumnsLayout", classes: "detailToolbarBottom", noStretch: true, components: [

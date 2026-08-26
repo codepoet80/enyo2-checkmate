@@ -179,6 +179,24 @@
     vertical-align: middle;
 }
 
+/* Explanatory text on the credentials screen. finePrint is deliberately small
+   and shared with the sign-in screen's terms; this is the one place the text is
+   the point rather than a footnote, so it gets read at arm's length. */
+.credentialNote {
+    color: white;
+    margin-left: 5%;
+    margin-right: 6%;
+    margin-top: 10px;
+    font-size: medium;
+    line-height: 1.35;
+}
+@media all and (max-width: 600px) {
+    .credentialNote {
+        margin-left: 5%;
+        margin-right: 5%;
+    }
+}
+
 /* Tap-to-reveal eye next to the grandmaster on the credentials screen. Sized
    generously: it is a touch target on a device, not just a glyph. */
 .revealIcon {
@@ -258,4 +276,12 @@
 .spell-check-input:empty::before {
     color: #888888;
     pointer-events: none;
+}
+
+/* webOS renders these a couple of pixels lower in their buttons than a modern
+   browser does, which reads as off-centre on a TouchPad. */
+.on-webos .toolButton img,
+.on-webos .lockIcon,
+.on-webos .revealIcon {
+    margin-top: -2px;
 }

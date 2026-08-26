@@ -11,5 +11,11 @@ enyo.kind({
 });
 
 enyo.ready(function () {
+	//A hook for the handful of places where webOS needs slightly different
+	//	metrics from a modern browser. Enyo knows the platform but doesn't put it
+	//	on the body, and PalmSystem covers builds where enyo.platform doesn't.
+	if ((enyo.platform && enyo.platform.webos) || typeof window.PalmSystem !== "undefined") {
+		enyo.dom.addBodyClass("on-webos");
+	}
 	new checkmate.Application({name: "app"});
 });
