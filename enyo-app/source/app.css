@@ -157,6 +157,19 @@
     font-family: 'Helvetica Neue', 'Nimbus Sans L', Arial, sans-serif;
     font-size: large;
 }
+/* The one time a user ever sees their credentials, so make them easy to copy
+   down by hand and easy to select on a device that can. */
+.credentialValue {
+    margin-left: 8px;
+    margin-right: 8px;
+    margin-top: 2px;
+    margin-bottom: 10px;
+    font-size: x-large;
+    font-weight: bold;
+    word-wrap: break-word;
+    -webkit-user-select: text;
+    user-select: text;
+}
 .finePrint {
     color:white;
     margin-left: 5%;

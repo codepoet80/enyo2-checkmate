@@ -106,10 +106,7 @@ enyo.kind({
 			this.$.myCheckmate.onPostError = enyo.bind(this, "handlePostError");
 			this.$.myCheckmate.onQueueChanged = enyo.bind(this, "handleQueueChanged");
 			if (serverConfig && notation && grandmaster) {
-				this.$.myCheckmate.setUrlBase(serverConfig.urlBase);
-				this.$.myCheckmate.setInsecure(serverConfig.insecure);
-				this.$.myCheckmate.setUseCustomServer(serverConfig.useCustomServer);
-				this.$.myCheckmate.setCustomServer(serverConfig.customServer);
+				this.applyServerConfig(serverConfig);
 
 				this.$.myCheckmate.notation = notation;
 				this.$.myCheckmate.grandmaster = grandmaster;
@@ -441,6 +438,21 @@ enyo.kind({
 		this.$.contentPanels.setIndex(2);
 		this.$.contentPanels.draggable = false;
 	},
+	//The api's server settings are published properties, so they only move when
+	//	their setters are called. Logging in used to assign a `serverConfig`
+	//	property the api kind doesn't have, which changed nothing: a self-hosting
+	//	user who logged in -- or created an account and logged straight in -- kept
+	//	talking to the shared service until the app was relaunched and rendered()
+	//	read the cookie back properly.
+	applyServerConfig: function(config) {
+		if (!config) {
+			return;
+		}
+		this.$.myCheckmate.setUrlBase(config.urlBase);
+		this.$.myCheckmate.setInsecure(config.insecure);
+		this.$.myCheckmate.setUseCustomServer(config.useCustomServer);
+		this.$.myCheckmate.setCustomServer(config.customServer);
+	},
 	loginDone: function() {
 		this.serverConfig = {
 			urlBase: this.$.signinPanel.getUrlBase(),
@@ -449,7 +461,7 @@ enyo.kind({
 			customServer: this.$.signinPanel.getCustomServer()
 		};
 		Prefs.setCookie("serverConfig", this.serverConfig);
-		this.$.myCheckmate.serverConfig = this.serverConfig;
+		this.applyServerConfig(this.serverConfig);
 
 		this.$.myCheckmate.notation = this.$.signinPanel.move;
 		Prefs.setCookie("move", this.$.signinPanel.move);

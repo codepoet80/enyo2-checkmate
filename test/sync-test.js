@@ -97,7 +97,29 @@ function takeInFlight(kind) {
 /* ---------- enyo shim ---------- */
 var kinds = {};
 global.enyo = {
-    kind: function (def) { kinds[def.name] = def; return def; },
+    kind: function (def) {
+        // Real Enyo generates getX/setX for every published property. Without
+        // these, anything that reads a published value back through its getter
+        // -- buildURL(), applyServerConfig() -- can't be exercised at all.
+        if (def.published) {
+            Object.keys(def.published).forEach(function (name) {
+                var cap = name.charAt(0).toUpperCase() + name.slice(1);
+                if (!def['get' + cap]) {
+                    def['get' + cap] = function () {
+                        return this[name] !== undefined ? this[name] : def.published[name];
+                    };
+                }
+                if (!def['set' + cap]) {
+                    def['set' + cap] = function (v) {
+                        this[name] = v;
+                        if (this[name + 'Changed']) { this[name + 'Changed'](); }
+                    };
+                }
+            });
+        }
+        kinds[def.name] = def;
+        return def;
+    },
     inherit: function (fn) { return fn(function () {}); },
     Ajax: FakeAjax,
     json: {stringify: function (v) { return JSON.stringify(v); },
@@ -126,6 +148,7 @@ global.CheckmateScramble = require(path.join(ROOT, 'enyo-app/source/api/scramble
 load('enyo-app/source/api/checkmate.js');
 load('enyo-app/source/api/version.js');
 load('enyo-app/source/views/main.js');
+load('enyo-app/source/views/signin.js');
 
 /* ---------- instantiate ---------- */
 function resetWorld() {
@@ -177,6 +200,86 @@ function makeView(api) {
     api.onRefreshSuccess = enyo.bind(view, 'handleRefreshSuccess');
     api.onPostSuccess = enyo.bind(view, 'handlePostSuccess');
     api.onPostError = enyo.bind(view, 'handlePostError');
+    return view;
+}
+
+//The sign-in panel is mostly widgets, so the stubs only need to record what the
+//  flow does to them. Everything the account-creation path touches is here.
+function makeSignin(credentialsResult) {
+    var def = kinds['checkmate.Signin'];
+    var view = {};
+    for (var k in def) { view[k] = def[k]; }
+    view.inherited = function () {};
+
+    function label(name) {
+        return {name: name, content: '', setContent: function (c) { this.content = c; }};
+    }
+    function input(name) {
+        return {name: name, value: '', getValue: function () { return this.value; },
+                setValue: function (v) { this.value = v; }};
+    }
+    function toggle(name) {
+        return {name: name, value: false, getValue: function () { return this.value; },
+                setValue: function (v) { this.value = v; }, setDisabled: function () {}};
+    }
+    function drawer(name) {
+        return {name: name, open: false, setOpen: function (o) { this.open = o; }};
+    }
+    function button(name, content) {
+        return {name: name, content: content, disabled: false,
+                setContent: function (c) { this.content = c; },
+                setDisabled: function (d) { this.disabled = d; }};
+    }
+
+    view.$ = {
+        drawerTOS: drawer('drawerTOS'),
+        drawerNewAccount: drawer('drawerNewAccount'),
+        drawerServer: drawer('drawerServer'),
+        textTOS: label('textTOS'),
+        textNewMove: label('textNewMove'),
+        textNewGrandmaster: label('textNewGrandmaster'),
+        inputMove: input('inputMove'),
+        inputGrandmaster: input('inputGrandmaster'),
+        inputCustomServer: input('inputCustomServer'),
+        checkInsecure: toggle('checkInsecure'),
+        checkCustomServer: toggle('checkCustomServer'),
+        buttonCreate: button('buttonCreate', 'Create'),
+        buttonLogin: button('buttonLogin', 'Log In'),
+        popupAgree: {showing: false, setShowing: function (v) { this.showing = v; }},
+        popupAgreeMessage: label('popupAgreeMessage')
+    };
+
+    // published properties the panel reads back through its own getters
+    var props = {urlBase: 'checkmate.wosa.link', insecure: false, useCustomServer: false, customServer: ''};
+    view.getUrlBase = function () { return props.urlBase; };
+    view.setInsecure = function (v) { props.insecure = v; };
+    view.getInsecure = function () { return props.insecure; };
+    view.setUseCustomServer = function (v) { props.useCustomServer = v; };
+    view.getUseCustomServer = function () { return props.useCustomServer; };
+    view.setCustomServer = function (v) { props.customServer = v; };
+    view.getCustomServer = function () { return props.customServer; };
+    view.props = props;
+
+    view.messages = [];
+    view.doMessage = function () { this.messages.push(this.messageToShow); };
+    view.loginCalls = 0;
+    view.doLogin = function () { this.loginCalls++; };
+
+    view.apiConfig = {};
+    view.credentialCalls = 0;
+    view.api = {
+        setInsecure: function (v) { view.apiConfig.insecure = v; },
+        setUseCustomServer: function (v) { view.apiConfig.useCustomServer = v; },
+        setCustomServer: function (v) { view.apiConfig.customServer = v; },
+        getNewCredentials: function (success, failure) {
+            view.credentialCalls++;
+            if (credentialsResult && credentialsResult.fail !== undefined) {
+                failure(credentialsResult.fail);
+            } else {
+                success(credentialsResult);
+            }
+        }
+    };
     return view;
 }
 
@@ -690,6 +793,144 @@ section('Scrambled at rest');
     v7.serverTasks = [task('X', 'cm1:notreallybase64!!', 1)];
     v7.refreshProjection();
     ok('an unreadable blob is left visible', byGuid(v7.viewTasks, 'X').title === 'cm1:notreallybase64!!');
+})();
+
+/* ================= ACCOUNT CREATION ================= */
+section('Creating an account');
+(function () {
+    var creds = {move: "Bishop to King's Rook 8", grandmaster: 'Hao Wang', newfile: 'notations/bishop-kingsrook8.json'};
+
+    // Tapping Create asks first -- it is the one irreversible thing this screen
+    // does, and the service picks credentials that can never be changed.
+    var v = makeSignin(creds);
+    v.tapCreate();
+    ok('Create asks before it creates', v.$.popupAgree.showing === true);
+    ok('  and nothing was created yet', v.credentialCalls === 0);
+    ok('  and the terms are put in front of the user', v.$.drawerTOS.open === true);
+    ok('  and the prompt names the server', v.$.popupAgreeMessage.content.indexOf('checkmate.wosa.link') !== -1,
+       v.$.popupAgreeMessage.content);
+
+    v.cancelCreate();
+    ok('Cancel dismisses without creating', v.$.popupAgree.showing === false && v.credentialCalls === 0);
+    ok('  and Create is still offered', v.$.buttonCreate.disabled === false);
+
+    // Agreeing creates exactly one account.
+    v.tapCreate();
+    v.confirmCreate();
+    ok('agreeing creates the account', v.credentialCalls === 1);
+    ok('  the popup closes', v.$.popupAgree.showing === false);
+    ok('  the credentials are shown', v.$.drawerNewAccount.open === true);
+    ok('  the move is displayed in the clear', v.$.textNewMove.content === "Bishop to King's Rook 8");
+    ok('  the grandmaster too', v.$.textNewGrandmaster.content === 'Hao Wang');
+
+    // The grandmaster field is a password input and masks what it holds, so the
+    // drawer above is the user's only chance to copy it down -- but both fields
+    // are filled so Log In just works.
+    ok('  the move is filled in for log-in', v.$.inputMove.value === "Bishop to King's Rook 8");
+    ok('  the grandmaster is filled in for log-in', v.$.inputGrandmaster.value === 'Hao Wang');
+
+    v.tapLogin();
+    ok('Log In works straight afterwards', v.loginCalls === 1);
+
+    // A second tap must not strand the first set of credentials on the server.
+    var before = v.credentialCalls;
+    v.tapCreate();
+    ok('a second Create does not mint another account', v.credentialCalls === before);
+    ok('  and says why', v.messages[v.messages.length - 1].indexOf('already created') !== -1,
+       v.messages[v.messages.length - 1]);
+    ok('  without reopening the prompt', v.$.popupAgree.showing === false);
+
+    // The service answers 200 with an error body for some failures, so a
+    // response is not the same thing as a pair of credentials.
+    var v2 = makeSignin({error: 'failed to write to file'});
+    v2.tapCreate(); v2.confirmCreate();
+    ok('an error body is not treated as success', v2.$.drawerNewAccount.open === false);
+    ok('  the user is told', v2.messages.length === 1 && v2.messages[0].indexOf('could not be created') !== -1);
+    ok('  the reason is passed through', v2.messages[0].indexOf('failed to write to file') !== -1, v2.messages[0]);
+    ok('  and Create can be tried again', v2.$.buttonCreate.disabled === false && v2.$.buttonCreate.content === 'Create');
+
+    var v3 = makeSignin({fail: null});
+    v3.tapCreate(); v3.confirmCreate();
+    ok('a transport failure is reported', v3.messages.length === 1);
+    ok('  with something actionable', v3.messages[0].indexOf('unreachable') !== -1, v3.messages[0]);
+    ok('  and Create is offered again', v3.$.buttonCreate.disabled === false);
+
+    var v4 = makeSignin({move: "Bishop to King's Rook 8"});   // no grandmaster
+    v4.tapCreate(); v4.confirmCreate();
+    ok('half a response is not a success', v4.$.drawerNewAccount.open === false && v4.messages.length === 1);
+
+    // Ticking "Use Self Host Server" and then tapping Create used to mint the
+    // account on the shared service, because the api kept the config it was
+    // built with.
+    var v5 = makeSignin(creds);
+    v5.$.checkCustomServer.setValue(true);
+    v5.$.inputCustomServer.setValue('todo.example.test');
+    v5.tapCreate();
+    ok('the self-host setting reaches the api before creating', v5.apiConfig.customServer === 'todo.example.test');
+    ok('  and is switched on', v5.apiConfig.useCustomServer === true);
+    ok('  and the prompt names that server', v5.$.popupAgreeMessage.content.indexOf('todo.example.test') !== -1,
+       v5.$.popupAgreeMessage.content);
+
+    // On a first run there is no config cookie at all, which is what the old
+    // "go create one in a browser" message read through -- it threw before it
+    // could be shown.
+    var v6 = makeSignin(creds);
+    v6.serverConfig = undefined;
+    v6.$.inputMove.setValue(''); v6.$.inputGrandmaster.setValue('');
+    v6.tapLogin();
+    ok('logging in with empty fields explains itself', v6.messages.length === 1);
+    ok('  and points at Create rather than a browser', v6.messages[0].indexOf('tap Create') !== -1, v6.messages[0]);
+    ok('  and does not attempt a log-in', v6.loginCalls === 0);
+})();
+
+/* ================= SERVER SETTINGS ================= */
+section('Server settings reach the api');
+(function () {
+    resetWorld(); var api = makeApi(); var v = makeView(api);
+    // makeApi() stubs buildURL; put the real one back so we can see where a
+    // call would actually go.
+    api.buildURL = kinds['checkmate.api'].buildURL;
+
+    v.applyServerConfig({urlBase: 'todo.example.test', insecure: false,
+                         useCustomServer: false, customServer: ''});
+    ok('the url base is applied', api.getUrlBase() === 'todo.example.test');
+    ok('  and is used', api.buildURL('read-notation') === 'https://todo.example.test/read-notation.php');
+
+    v.applyServerConfig({urlBase: 'todo.example.test', insecure: true,
+                         useCustomServer: true, customServer: 'lan.example.test:8080'});
+    ok('a self-host server wins over the default', api.buildURL('read-notation').indexOf('lan.example.test:8080') !== -1);
+    ok('  and the insecure setting is honoured', api.buildURL('read-notation').indexOf('http://') === 0,
+       api.buildURL('read-notation'));
+
+    v.applyServerConfig(null);
+    ok('a missing config is ignored rather than throwing', api.getUrlBase() === 'todo.example.test');
+
+    // Logging in has to go through those setters. It used to assign a
+    // `serverConfig` property the api kind doesn't have, which changed nothing:
+    // a self-hosting user who logged in kept talking to the shared service for
+    // the rest of the session.
+    resetWorld(); var api2 = makeApi(); var v2 = makeView(api2);
+    api2.buildURL = kinds['checkmate.api'].buildURL;
+    v2.$.signinPanel = {
+        move: "Queen to King 7", grandmaster: 'Vladimir Kramnik',
+        getUrlBase: function () { return 'todo.example.test'; },
+        getInsecure: function () { return true; },
+        getUseCustomServer: function () { return true; },
+        getCustomServer: function () { return 'lan.example.test:8080'; }
+    };
+    v2.$.buttonLoginOut = {setContent: function () {}};
+    v2.$.contentPanels = {
+        components: [{}],
+        getActive: function () { return {destroy: function () {}}; },
+        setIndex: function () {}, render: function () {}, draggable: false
+    };
+    v2.loginDone();
+    ok('logging in points the api at the chosen server',
+       api2.buildURL('read-notation') === 'http://lan.example.test:8080/read-notation.php',
+       api2.buildURL('read-notation'));
+    ok('  and carries the credentials over', api2.notation === "Queen to King 7" && api2.grandmaster === 'Vladimir Kramnik');
+    ok('  and the scramble key follows the new notation',
+       v2.scrambleMove() === 'queen-king7', v2.scrambleMove());
 })();
 
 console.log('\n========================================');

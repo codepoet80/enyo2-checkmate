@@ -406,6 +406,26 @@ enyo.kind({
 		}, this);
 		request.go();
 	},
+	//Ask the service to mint a brand new notation and grandmaster. Unauthenticated
+	//	by design: this is how a user gets credentials in the first place, so there
+	//	is nothing to authenticate with yet. The server picks both -- the user
+	//	cannot choose them -- and this is the only time they are ever shown.
+	getNewCredentials: function(success, failure) {
+		var useUrl = this.buildURL("new-user");
+		var request = new enyo.Ajax({
+			url: useUrl,
+			method: "GET",
+			timeout: this.requestTimeout,
+			cacheBust: true
+		});
+		request.error(enyo.bind(this, function(inSender, inValue) {
+			failure(this.describeFailure(inSender, inValue));
+		}));
+		request.response(function(inRequest, inResponse) {
+			success(inResponse);
+		}, this);
+		request.go();
+	},
 	cleanupTasks: function(success, failure) {
 		var useUrl = this.buildURL("cleanup-notation") + "?move=" + this.notation;
 		var request = new enyo.Ajax({
