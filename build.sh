@@ -160,14 +160,14 @@ next_build_number() {
 #
 # This rewrites the deploy OUTPUT, never enyo-app/serviceworker.js, so a failed
 # build can't leave the source tree modified.
-stamp_service_worker() {
+stamp_build() {
     sw="$mydir/enyo-app/deploy/serviceworker.js"
     appinfo="$mydir/enyo-app/appinfo.json"
 
-    # webOS builds don't ship one; nothing to do.
-    if [ ! -f "$sw" ]; then
-        return 0
-    fi
+    # The service worker is optional -- webOS has no support for one -- but the
+    # bundle stamp below is not, so this can't bail out just because the service
+    # worker is absent. It used to, which is half of why webOS builds reported
+    # themselves as unbuilt.
     if [ ! -f "$appinfo" ]; then
         echo "WARNING: $appinfo not found; leaving service worker cache names unchanged"
         return 0
@@ -192,11 +192,13 @@ stamp_service_worker() {
     # -i.bak is the form both BSD (macOS) and GNU sed accept. The deploy dir is
     # wiped at the end of every build, so this always rewrites a pristine copy of
     # the source and the suffix can't compound across builds.
-    sed -i.bak -E \
-        -e "s/(checkmate-dynamic-v)[0-9A-Za-z._-]+/\\1$stampver/g" \
-        -e "s/(checkmate-v)[0-9A-Za-z._-]+/\\1$stampver/g" \
-        "$sw"
-    rm -f "$sw.bak"
+    if [ -f "$sw" ]; then
+        sed -i.bak -E \
+            -e "s/(checkmate-dynamic-v)[0-9A-Za-z._-]+/\\1$stampver/g" \
+            -e "s/(checkmate-v)[0-9A-Za-z._-]+/\\1$stampver/g" \
+            "$sw"
+        rm -f "$sw.bak"
+    fi
 
     # Same stamp into the app bundle, so the running JS can report which build it
     # is without a network round trip. BuildInfo.stamp in source/api/version.js
@@ -301,8 +303,16 @@ if [ $webOS -eq 1 ]; then
     rm -rf $mydir/bin/www/*
     #swap in old cordova
     cp -f $mydir/cordova-webos.js $mydir/enyo-app/cordova.js
-    #build
-    $mydir/enyo-app/tools/deploy.sh -w $verbose
+    #build the bundle only. deploy.sh -w would package it here too, before there
+    #  was anything to stamp -- which is why webOS builds shipped with the build
+    #  sentinel still in them and reported "unbuilt (running from source)".
+    $mydir/enyo-app/tools/deploy.sh $verbose
+    #stamp the bundle, THEN package it
+    stamp_build
+    cp -f $mydir/enyo-app/appinfo.json $mydir/enyo-app/deploy/
+    cp -f $mydir/enyo-app/cordova.js $mydir/enyo-app/deploy/
+    mkdir -p $mydir/enyo-app/deploy/bin
+    palm-package $mydir/enyo-app/deploy -o $mydir/enyo-app/deploy/bin
     #stub out old cordova
     echo "/* For backward compatibility with webOS, do not delete */" > $mydir/enyo-app/cordova.js
     cp -f $mydir/enyo-app/cordova.js $mydir/enyo-app/deploy/cordova.js
@@ -324,10 +334,12 @@ else
     $mydir/enyo-app/tools/deploy.sh $verbose
 fi
 
-# Both branches above have now produced enyo-app/deploy, and nothing has consumed
-# it yet, so this is the one place that covers every target that ships a service
-# worker (www and Android; webOS has no service worker support at all).
-stamp_service_worker
+# www and Android stamp here, once the bundle exists and before anything consumes
+# it. The webOS branch stamps inside itself instead, because it has to package
+# the bundle as part of the same step and needs the stamp in place first.
+if [ $webOS -eq 0 ]; then
+    stamp_build
+fi
 
 if [ $android -eq 1 ]; then
     echo "Building for Android..."

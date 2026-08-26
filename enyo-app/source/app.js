@@ -17,5 +17,8 @@ enyo.ready(function () {
 	if ((enyo.platform && enyo.platform.webos) || typeof window.PalmSystem !== "undefined") {
 		enyo.dom.addBodyClass("on-webos");
 	}
+	//Asynchronous, and only a fallback for when the bundle wasn't stamped, so
+	//	nothing waits on it.
+	BuildInfo.loadAppInfo();
 	new checkmate.Application({name: "app"});
 });

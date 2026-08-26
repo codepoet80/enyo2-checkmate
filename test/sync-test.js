@@ -641,6 +641,19 @@ section('about:version build report');
 
     // unstamped bundle should say so rather than lying
     BuildInfo.stamp = '__CHECKMATE_BUILD__';
+    // appinfo.json is the fallback when a bundle was never stamped -- which is
+    // what a webOS build was, because it packaged the ipk before the stamp ran.
+    // Claiming "unbuilt" while appinfo.json sits next to the bundle helps nobody.
+    BuildInfo.stamp = '__CHECKMATE_BUILD__';
+    BuildInfo.appVersion = '2.4.0';
+    ok('an unstamped bundle falls back to appinfo.json', BuildInfo.getVersion() === '2.4.0 (unstamped build)',
+       BuildInfo.getVersion());
+    ok('  and says the stamp was missing', BuildInfo.getVersion().indexOf('unstamped') !== -1);
+    BuildInfo.stamp = '2.4.0-0061';
+    ok('a stamped bundle still wins, build number and all', BuildInfo.getVersion() === '2.4.0-0061');
+    BuildInfo.appVersion = null;
+    BuildInfo.stamp = '__CHECKMATE_BUILD__';
+
     ok('unstamped source reports itself', BuildInfo.getVersion().indexOf('unbuilt') !== -1,
        BuildInfo.getVersion());
     ok('  isStamped() is false', BuildInfo.isStamped() === false);

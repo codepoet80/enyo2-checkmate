@@ -11,6 +11,9 @@ BuildInfo = {
 
 	stamp: "__CHECKMATE_BUILD__",
 
+	//Filled in by loadAppInfo() from the appinfo.json every build ships.
+	appVersion: null,
+
 	//The unstamped sentinel is the only value that begins with an underscore; a
 	//	stamped one always begins with a version digit. Deliberately not a
 	//	substring comparison against the sentinel text, which build.sh would
@@ -19,8 +22,51 @@ BuildInfo = {
 		return this.stamp.charAt(0) !== "_";
 	},
 
+	//Read the version straight out of appinfo.json, which every target ships
+	//	alongside the bundle. The stamp is still preferred where it exists,
+	//	because it carries the build number too and that is the thing that
+	//	answers "did my deploy actually land" -- appinfo.json only ever says
+	//	2.4.0, however many times that has been rebuilt. But when the stamp is
+	//	missing, reporting the real version beats claiming the app is unbuilt.
+	loadAppInfo: function() {
+		var self = this;
+		try {
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", "appinfo.json", true);
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState !== 4) {
+					return;
+				}
+				//A webOS app runs from file://, where a successful read reports
+				//	status 0 rather than 200.
+				var ok = (xhr.status === 0 && xhr.responseText) ||
+					(xhr.status >= 200 && xhr.status < 300);
+				if (!ok) {
+					return;
+				}
+				try {
+					var info = JSON.parse(xhr.responseText);
+					if (info && info.version) {
+						self.appVersion = info.version;
+					}
+				} catch (err) {
+					//Not readable; getVersion() falls back on its own.
+				}
+			};
+			xhr.send(null);
+		} catch (err) {
+			//No XHR, or blocked. Nothing to report from here.
+		}
+	},
+
 	getVersion: function() {
-		return this.isStamped() ? this.stamp : "unbuilt (running from source)";
+		if (this.isStamped()) {
+			return this.stamp;
+		}
+		if (this.appVersion) {
+			return this.appVersion + " (unstamped build)";
+		}
+		return "unbuilt (running from source)";
 	},
 
 	//Short summary of whatever Enyo managed to detect, e.g. "webos 3.0.5" or
