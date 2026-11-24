@@ -30,7 +30,18 @@
 		<!-- set header color for iOS-->
 		<meta name="theme-color" content="#000000">
 		<meta name="apple-mobile-web-app-capable" content="yes"/>
-		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<!-- black-translucent only on iPhone/iPad. Safari web apps on macOS read the same
+		     tag as "draw the page under the title bar", which puts the traffic lights on
+		     top of our header. iPadOS claims to be a Mac, so tell them apart by touch. -->
+		<script>
+			(function () {
+				var ua = navigator.userAgent;
+				var touchApple = /iPhone|iPad|iPod/.test(ua) ||
+					(/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+				var style = touchApple ? "black-translucent" : "black";
+				document.write('<meta name="apple-mobile-web-app-status-bar-style" content="' + style + '">');
+			})();
+		</script>
 		<!-- security - set to lowest for webOS apps on Android -->
 		<meta http-equiv="Content-Security-Policy" content="default-src *; style-src * 'unsafe-inline' 'self'; script-src * 'unsafe-inline' 'unsafe-eval' 'self' ; ">
 		<!-- css -->
