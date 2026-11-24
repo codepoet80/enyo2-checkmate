@@ -12,6 +12,12 @@ enyo.kind({
 	//	error after launch dropped straight to offline instead of backing off.
 	errorCount: 0,
 	components:[
+		//iOS blurs whatever scrolls under the status bar in a home-screen web app;
+		//	this strip stops it (see .remove-blur in app.css). It has to be a
+		//	component, not markup in index.html: Enyo replaces <body>'s contents when
+		//	it renders. And it has to be the FIRST child -- FittableLayout sizes the
+		//	panels from the last child's position, which a fixed strip would throw off.
+		{name: "removeBlur", classes: "remove-blur"},
 		{kind: 'SoundPlayer', name:"mySoundPlayer", sounds: [
 			{kind: 'enyo.Audio', name:"soundSweep", src: 'assets/sweep.mp3'},
 			{kind: 'enyo.Audio', name:"soundCheck", src: 'assets/check.mp3'},
@@ -20,6 +26,9 @@ enyo.kind({
 		]},
 		{kind: 'wosa.updater', name:"myUpdater", onUpdateFound:"handleUpdateFound"},
 		{kind: 'checkmate.api', name:"myCheckmate"},
+		//Room for the traffic lights when a Safari web app on macOS draws the page
+		//	under its title bar. See checkTitlebar.
+		{name: "titlebarSpacer", classes: "titlebarSpacer", showing: false},
 		{kind: "Panels", name:"contentPanels", fit: true, classes:"app-panels",  narrowFit:false, arrangerKind: "CollapsingArranger", onTransitionFinish:"panelAnimationDone", wrap: false, components: [
 			{kind:"checkmate.DetailViewer", name:"taskDetails", onSave:"updateTaskFromDetails" },
 			{kind: "FittableRows", name:"body", classes:"taskListBody", fit:true, components: [
@@ -101,9 +110,37 @@ enyo.kind({
 	//	whatever was typed, so "is the PWA actually updated?" has an answer you can
 	//	read on the device -- and, because it syncs, from any other client too.
 	buildInfoTitle: "about:version",
+	//Safari web apps on macOS sometimes lay the page out under the title bar, with
+	//	the traffic lights on top of our header -- and toggling "Show navigation
+	//	controls" puts the title bar back until the next launch. The page can't ask
+	//	Safari which it got, but when the page is under the title bar the window and
+	//	the viewport are the same height, so measure that, on launch and on every
+	//	resize (that toggle resizes the viewport).
+	checkTitlebar: function() {
+		var ua = navigator.userAgent;
+		var macSafari = /Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) <= 1 &&
+			/Safari/.test(ua) && !/Chrome|Chromium|Edg|Firefox/.test(ua);
+		var standalone = navigator.standalone === true ||
+			(window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+		var chrome = window.outerHeight - window.innerHeight;
+		var underTitlebar = !!(macSafari && standalone && chrome < 10);
+		enyo.log("checkTitlebar: macSafari=" + macSafari + " standalone=" + standalone +
+			" outer-inner=" + chrome + " spacer=" + underTitlebar);
+		if (this.$.titlebarSpacer.getShowing() !== underTitlebar) {
+			this.$.titlebarSpacer.setShowing(underTitlebar);
+			this.resize();
+		}
+	},
+	handleResize: enyo.inherit(function(sup) {
+		return function() {
+			sup.apply(this, arguments);
+			this.checkTitlebar();
+		};
+	}),
 	rendered: enyo.inherit(function(sup) {
 		return function() {
 			sup.apply(this, arguments);
+			this.checkTitlebar();
 			this.startSpinner();
 			var notation = Prefs.getCookie("move", null);
 			var grandmaster = Prefs.getCookie("grandmaster", null);

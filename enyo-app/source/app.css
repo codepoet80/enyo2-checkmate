@@ -285,3 +285,24 @@
 .on-webos .revealIcon {
     margin-top: -2px;
 }
+
+/* Sits above the header when a Safari web app on macOS draws the page under its
+   title bar; MainView.checkTitlebar shows and hides it. Black to match the header. */
+.titlebarSpacer {
+    height: 28px;
+    background-color: black;
+}
+
+/* iOS blurs the top edge of a home-screen web app; a fixed, text-clipped strip
+   along that edge stops it. Invisible -- background-clip:text with no text paints
+   nothing -- and only present when running standalone. */
+.remove-blur {
+    display: none;
+}
+@media (display-mode: standalone) {
+    .remove-blur {
+        display: block; position: fixed; top: 0; left: 0; right: 0; height: 11px;
+        z-index: 1000; pointer-events: none;
+        background: #000; -webkit-background-clip: text; background-clip: text;
+    }
+}
