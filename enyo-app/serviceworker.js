@@ -128,6 +128,31 @@ self.addEventListener('fetch', function(event) {
         return;
     }
     
+    // The page itself goes to the network first. Cache-first here meant a fix to
+    // index.html never reached anyone whose cache name hadn't changed -- the
+    // installed app kept launching the old page indefinitely. Offline, fall back
+    // to the cached copy; online, refresh that copy for next time.
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request).then(function(networkResponse) {
+                if (networkResponse.status === 200) {
+                    var copy = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(function(cache) {
+                        cache.put('./index.html', copy);
+                    });
+                }
+                return networkResponse;
+            }).catch(function() {
+                // index.html first: it's the copy refreshed above, while the
+                // cached './' entry is only as fresh as the last install.
+                return caches.match('./index.html').then(function(cached) {
+                    return cached || caches.match(request);
+                });
+            })
+        );
+        return;
+    }
+
     event.respondWith(
         caches.match(request).then(function(cachedResponse) {
             // Return cached version if available
